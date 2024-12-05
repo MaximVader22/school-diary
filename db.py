@@ -1,4 +1,3 @@
-import datetime
 import sqlite3
 
 client = sqlite3.connect("database.db")
@@ -42,12 +41,5 @@ client.execute('''
         elder BOOLEAN DEFAULT FALSE
     )
 ''')
-
-today = datetime.date.today()
-
-client.execute('INSERT INTO subjects(subject) VALUES(?)', ("Русский язык",))
-client.execute('INSERT INTO schedule(subject, week_day) VALUES(?, ?)', (1, today))
-client.execute('INSERT INTO students(name, surname, patronymic, username) VALUES (?, ?, ?, ?)', ("Иван", "Иванов", "Иванович", "12345Q"))
-client.execute('INSERT INTO homework(subject, description, begin_date, end_date) VALUES (?, ?, ?, ?)', (1, "Учить правило", today, today))
 
 client.commit()
