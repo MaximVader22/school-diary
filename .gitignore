@@ -1,2 +1,3 @@
 venv/
-Dockerfile
+http_api.txt
+database.db
