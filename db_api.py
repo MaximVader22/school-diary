@@ -92,27 +92,28 @@ def init_database():
         client.execute("""
             CREATE TABLE IF NOT EXISTS schedule(
                 schedule_id INTEGER PRIMARY KEY,
-                subject VARCHAR(30) NOT NULL,
-                weekday VARCHAR(3) NOT NULL,
-                begin TIME NOT NULL,
-                end TIME NOT NULL
+                subject TEXT NOT NULL,
+                weekday TEXT NOT NULL,
+                begin TEXT NOT NULL,
+                end TEXT NOT NULL
             )
         """)
 
         client.execute("""
             CREATE TABLE IF NOT EXISTS homework(
                 homework_id INTEGER PRIMARY KEY,
-                subject VARCHAR(30) NOT NULL,
-                description VARCHAR(300) NOT NULL,
-                date DATE NOT NULL
+                subject TEXT NOT NULL,
+                description TEXT NOT NULL,
+                date TEXT NOT NULL
             )
         """)
 
         client.execute("""
             CREATE TABLE IF NOT EXISTS users(
-                student_id INTEGER PRIMARY KEY,
-                username VARCHAR(35) NOT NULL UNIQUE,
-                state VARCHAR (50) NOT NULL
+                user_id INTEGER PRIMARY KEY,
+                username TEXT NOT NULL UNIQUE,
+                is_admin INTEGER DEFAULT 0,
+                state TEXT NOT NULL
             )
         """)
 
@@ -142,14 +143,11 @@ def create_homework(date, subject, description) -> Homework:
         client.commit()
         return Homework(date, subject, description)
 
-
-def get_schedule(day):
+def get_schedule(weekday):
     with create_connection() as client:
-        cursor = client.execute("SELECT position FROM schedule WHERE day=?", (day,))
-        result = []
-        for row in cursor.fetchall():
-            result.append(get_subject(day, row[0]))
-        return result
+        cursor = client.execute(
+            f"SELECT * FROM schedule WHERE weekday='{weekday}'")
+        return cursor.fetchall()
 
 
 def get_all_homework(date: str = None):
@@ -176,18 +174,24 @@ def get_homework(date, subject):
             result.append(homework)
     return result
 
-def create_user(username):
+def create_user(username, is_admin=False):
     with create_connection() as client:
         if not client.execute(
             f"SELECT * FROM users WHERE username='{username}'").fetchall():
             client.execute(
-                f"INSERT INTO users (username, state) VALUES ('{username}', 'idle')")
+                f"INSERT INTO users (username, is_admin, state) VALUES ('{username}', {(is_admin)}, 'idle')")
 
 def get_user_state(username):
     with create_connection() as client:
         res = client.execute(
-            f"SELECT * FROM users WHERE username='{username}'").fetchall()[0][2]
+            f"SELECT * FROM users WHERE username='{username}'").fetchall()[0][3]
     return res
+
+def is_admin(username):
+    with create_connection() as client:
+        res = client.execute(
+            f"SELECT * FROM users WHERE username='{username}'").fetchall()[0][2]
+    return bool(res)
 
 def update_user_state(username, state="idle"):
     with create_connection() as client:
