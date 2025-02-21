@@ -1,52 +1,118 @@
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 import schedule_json as sch
 
 # Вставьте ваш токен вместо 'YOUR_BOT_TOKEN'
 with open('http_api.txt') as f:
-    token=f.read()
+    token = f.read().strip()
 
 # Глобальные переменные
-json_name='schedule.json'
+json_name = 'schedule.json'
 
 # Инициализация бота и диспетчера
 bot = Bot(token=token)
 dp = Dispatcher()
-builder = InlineKeyboardBuilder()
-
-# Создаем роутер
 router = Router()
 dp.include_router(router)
-
-# Кнопки
-def create_button_start():
-    builder.add(InlineKeyboardButton(text='Профиль', callback_data='profile'),
-                InlineKeyboardButton(text='Расписание', callback_data='schedule'))
+'''
+### Кнопки ###
+'''
+def create_main_menu():
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(text='Профиль', callback_data='profile'),
+        InlineKeyboardButton(text='Расписание', callback_data='schedule')
+    )
     builder.adjust(1)
     return builder.as_markup()
-    
+
+def create_schedule_menu():
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule'),
+        InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
+        InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
+        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
+    )
+    builder.adjust(1)
+    return builder.as_markup()
 
 # Обработчик команды /start
 @router.message(Command("start"))
 async def send_welcome(message: Message):
-    await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_button_start())
+    await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
     
-    
+'''
 
-# Callback-функции
-@router.callback_query(F.data.startswith('profile')) # Ф-ция для открытия профиля пользователя
+### Callback-функции ###
+
+'''
+
+# Профиль
+
+@router.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
-    pass
+    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.")
+#
 
-@router.callback_query(F.data.startswith('schedule'))
+@router.callback_query(F.data == "schedule")
 async def schedule(call: CallbackQuery):
-    pass
-    
+    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu())
 
-# Запуск бота
+# Просмотр расписания
+
+@router.callback_query(F.data == "view_schedule")
+async def view_schedule(call: CallbackQuery):
+    schedule_data = sch.load_schedule(json_name)
+    if not schedule_data:
+        await call.message.answer("Расписание пустое.")
+        return
+    response = "Ваше текущее расписание:\n"
+    for day, lessons in schedule_data.items():
+        response += f"{day}: {', '.join(lessons)}\n"
+    await call.message.answer(response)
+
+# Добавление предмета
+
+@router.callback_query(F.data == "add_subject")
+async def add_subject_prompt(call: CallbackQuery):
+    await call.message.answer("Введите день недели и предмет через запятую (например, Monday, Math):")
+
+@router.message(F.text)
+async def handle_add_subject(message: Message):
+    try:
+        day, subject = map(str.strip, message.text.split(',', 1))
+        sch.add_schedule(json_name, day, [subject])
+        await message.answer(f"Предмет '{subject}' успешно добавлен на {day}.")
+    except ValueError:
+        await message.answer("Неверный формат ввода. Пожалуйста, используйте формат: день, предмет.")
+
+# Удаление предмета
+
+@router.callback_query(F.data == "remove_subject")
+async def remove_subject_prompt(call: CallbackQuery):
+    await call.message.answer("Введите название предмета для удаления:")
+
+@router.message(F.text)
+async def handle_remove_subject(message: Message):
+    subject = message.text.strip()
+    sch.remove_one_subject(json_name, subject)
+    await message.answer(f"Попытка удалить предмет '{subject}' завершена.")
+
+# В главное меню
+
+@router.callback_query(F.data == "back_to_main")
+async def back_to_main(call: CallbackQuery):
+    await call.message.answer("Вы вернулись в главное меню.", reply_markup=create_main_menu())
+
+'''
+### MAIN-функция ###
+### Запуск бота ###
+'''
+
 async def main():
     await bot.delete_webhook()
     await dp.start_polling(bot)
