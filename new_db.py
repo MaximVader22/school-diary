@@ -29,7 +29,6 @@ def create_user(user_id, is_admin=False, is_elder=False, remind_time=""):
 def user_exists(user_id) -> bool:
     with create_connection() as client:
         res = client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone()
-        print(res)
         return bool(res)
 
 def is_admin(user_id) -> bool:
@@ -59,7 +58,6 @@ def has_elder_rights(user_id) -> bool:
 
     with create_connection() as client:
         res = client.execute(f"SELECT is_admin, is_elder FROM users WHERE user_id='{user_id}'").fetchone()
-        print(res)
         return bool(res[0]) or bool(res[1])
 
 if __name__ == '__main__':

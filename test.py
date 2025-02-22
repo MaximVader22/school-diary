@@ -134,7 +134,6 @@ async def back_to_main(call: CallbackQuery):
 async def main():
     await bot.delete_webhook()
     init_database()
-    print("Ботик запустился")
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
