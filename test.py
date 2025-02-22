@@ -4,6 +4,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 import schedule_json as sch
+from new_db import *
 
 # Вставьте ваш токен вместо 'YOUR_BOT_TOKEN'
 with open('http_api.txt') as f:
@@ -29,14 +30,20 @@ def create_main_menu():
     builder.adjust(1)
     return builder.as_markup()
 
-def create_schedule_menu():
+def create_schedule_menu(user_id):
     builder = InlineKeyboardBuilder()
+
     builder.add(
         InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule'),
-        InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
-        InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
         InlineKeyboardButton(text='Назад', callback_data='back_to_main')
     )
+
+    if has_elder_rights(user_id):
+        builder.add(
+            InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
+            InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
+        )
+
     builder.adjust(1)
     return builder.as_markup()
 
@@ -60,7 +67,7 @@ async def profile(call: CallbackQuery):
 
 @router.callback_query(F.data == "schedule")
 async def schedule(call: CallbackQuery):
-    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu())
+    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.message.chat.username))
 
 # Просмотр расписания
 
@@ -83,6 +90,11 @@ async def add_subject_prompt(call: CallbackQuery):
 
 @router.message(F.text)
 async def handle_add_subject(message: Message):
+    # Не знаю, можно ли послать в ТГ фальшивый пакет данных, так что добавил ещё здесь проверку на всякий случай
+    if not has_elder_rights(message.chat.username):
+        await message.answer(f"У вас нет прав старосты.")
+        return
+
     try:
         day, subject = map(str.strip, message.text.split(',', 1))
         sch.add_schedule(json_name, day, [subject])
@@ -98,8 +110,14 @@ async def remove_subject_prompt(call: CallbackQuery):
 
 @router.message(F.text)
 async def handle_remove_subject(message: Message):
+    # Не знаю, можно ли послать в ТГ фальшивый пакет данных, так что добавил ещё здесь проверку на всякий случай
+    if not has_elder_rights(message.user_shared.user_id):
+        await message.answer(f"У вас нет прав старосты.")
+        return
+
     subject = message.text.strip()
     sch.remove_one_subject(json_name, subject)
+
     await message.answer(f"Попытка удалить предмет '{subject}' завершена.")
 
 # В главное меню
@@ -115,6 +133,8 @@ async def back_to_main(call: CallbackQuery):
 
 async def main():
     await bot.delete_webhook()
+    init_database()
+    print("Ботик запустился")
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
