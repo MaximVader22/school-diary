@@ -1,14 +1,19 @@
 from aiogram import Bot, Dispatcher, Router, F
+from aiogram.filters.state import State, StatesGroup
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
+from aiogram.fsm.context import FSMContext
 import schedule_json as sch
 from new_db import *
 
 # Вставьте ваш токен вместо 'YOUR_BOT_TOKEN'
 with open('http_api.txt') as f:
     token = f.read().strip()
+
+class Form(StatesGroup):
+    state = State()
 
 # Глобальные переменные
 json_name = 'schedule.json'
@@ -49,7 +54,9 @@ def create_schedule_menu(user_id):
 
 # Обработчик команды /start
 @router.message(Command("start"))
-async def send_welcome(message: Message):
+async def send_welcome(message: Message, state: FSMContext):
+    create_user(message.chat.username)
+    await state.update_data(state='idle')
     await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
     
 '''
@@ -65,8 +72,9 @@ async def profile(call: CallbackQuery):
     await call.message.answer("Это ваш профиль. Здесь пока ничего нет.")
 #
 
-@router.callback_query(F.data == "schedule")
-async def schedule(call: CallbackQuery):
+@router.callback_query(F.data == "schedule", Form.state)
+async def schedule(call: CallbackQuery, state: FSMContext):
+    state.update_data(state='edit_shedule')
     await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.message.chat.username))
 
 # Просмотр расписания
@@ -89,8 +97,13 @@ async def add_subject_prompt(call: CallbackQuery):
     await call.message.answer("Введите день недели и предмет через запятую (например, Monday, Math):")
 
 @router.message(F.text)
-async def handle_add_subject(message: Message):
+async def handle_add_subject(message: Message, state: FSMContext):
     # Не знаю, можно ли послать в ТГ фальшивый пакет данных, так что добавил ещё здесь проверку на всякий случай
+    current_state = await state.get_data()
+    current_state = current_state['state']
+    if current_state == 'idle':
+        await message.answer("Используйте кнопки для навигации.", reply_markup=create_main_menu())
+        return
     if not has_elder_rights(message.chat.username):
         await message.answer(f"У вас нет прав старосты.")
         return
@@ -108,8 +121,13 @@ async def handle_add_subject(message: Message):
 async def remove_subject_prompt(call: CallbackQuery):
     await call.message.answer("Введите название предмета для удаления:")
 
-@router.message(F.text)
-async def handle_remove_subject(message: Message):
+@router.message(F.text, Form.state)
+async def handle_remove_subject(message: Message, state: FSMContext):
+    current_state = await state.get_data()
+    current_state = current_state['state']
+    if current_state == 'idle':
+        await message.answer("Используйте кнопки для навигации.", reply_markup=create_main_menu())
+        return
     # Не знаю, можно ли послать в ТГ фальшивый пакет данных, так что добавил ещё здесь проверку на всякий случай
     if not has_elder_rights(message.user_shared.user_id):
         await message.answer(f"У вас нет прав старосты.")
@@ -122,8 +140,9 @@ async def handle_remove_subject(message: Message):
 
 # В главное меню
 
-@router.callback_query(F.data == "back_to_main")
-async def back_to_main(call: CallbackQuery):
+@router.callback_query(F.data == "back_to_main", Form.state)
+async def back_to_main(call: CallbackQuery, state: FSMContext):
+    state.update_data(state='idle')
     await call.message.answer("Вы вернулись в главное меню.", reply_markup=create_main_menu())
 
 '''
