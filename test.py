@@ -55,7 +55,7 @@ def create_schedule_menu(user_id):
 # Обработчик команды /start
 @router.message(Command("start"))
 async def send_welcome(message: Message, state: FSMContext):
-    create_user(message.from_user.id)
+    create_user(message.from_user.id, is_admin=are_users_empty())
     await state.set_state(Form.idle)
     await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
 
