@@ -73,7 +73,7 @@ async def profile(call: CallbackQuery):
 async def schedule(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule)
-    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.message.from_user.id))
+    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.from_user.id))
 
 # Просмотр расписания
 @router.callback_query(F.data == "view_schedule")

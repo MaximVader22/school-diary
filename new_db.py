@@ -17,18 +17,18 @@ def init_database():
 
         client.commit()
 
-    if not user_exists("JarPishik"):
-        create_user("JarPishik", True, True)
-
 def create_user(user_id, is_admin=False, is_elder=False, remind_time=""):
+    print(f"Trying to create user {user_id}...")
     with create_connection() as client:
-        if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchall():
+        if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone():
             client.execute(f"INSERT INTO users (user_id, is_admin, is_elder, remind_time) VALUES ('{user_id}', {is_admin}, {is_elder}, '{remind_time}')")
+            print(f"Created user {user_id}...")
             client.commit()
 
 def user_exists(user_id) -> bool:
     with create_connection() as client:
         res = client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone()
+        print(f"User {user_id} exists: {bool(res)}")
         return bool(res)
 
 def is_admin(user_id) -> bool:
@@ -37,6 +37,7 @@ def is_admin(user_id) -> bool:
 
     with create_connection() as client:
         res = client.execute(f"SELECT is_admin FROM users WHERE user_id='{user_id}'").fetchone()
+        print(f"Is {user_id} admin: {bool(res[0])}")
         return bool(res[0])
 
 def is_elder(user_id) -> bool:
@@ -45,6 +46,7 @@ def is_elder(user_id) -> bool:
 
     with create_connection() as client:
         res = client.execute(f"SELECT is_elder FROM users WHERE user_id='{user_id}'").fetchone()
+        print(f"Is {user_id} elder: {bool(res[0])}")
         return bool(res[0])
 
 def get_remind_time(user_id) -> str:
@@ -58,6 +60,8 @@ def has_elder_rights(user_id) -> bool:
 
     with create_connection() as client:
         res = client.execute(f"SELECT is_admin, is_elder FROM users WHERE user_id='{user_id}'").fetchone()
+        print(f"Is {user_id} admin: {bool(res[0])}")
+        print(f"Is {user_id} admin: {bool(res[1])}")
         return bool(res[0]) or bool(res[1])
 
 if __name__ == '__main__':
