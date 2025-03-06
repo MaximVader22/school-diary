@@ -58,6 +58,36 @@ def get_remind_time(user_id) -> str:
         res = client.execute(f"SELECT remind_time FROM users WHERE user_id='{user_id}'").fetchone()
         return res[0]
 
+def is_right_time_format(time: str) -> bool:
+    split = time.split(":")
+
+    if len(split) != 2:
+        return False
+
+    if not split[0].isnumeric() or not split[1].isnumeric():
+        return False
+
+    hour = int(split[0])
+    minute = int(split[1])
+
+    if hour < 0 or hour > 24:
+        return False
+
+    if minute < 0 or minute > 60:
+        return False
+
+    return True
+
+def set_remind_time(user_id, time: str):
+    if not user_exists(user_id):
+        return
+
+    if not is_right_time_format(time):
+        return
+
+    with create_connection() as client:
+        client.execute(f"UPDATE users SET remind_time='{time}' WHERE user_id='{user_id}'")
+
 def has_elder_rights(user_id) -> bool:
     if not user_exists(user_id):
         return False

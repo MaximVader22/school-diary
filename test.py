@@ -5,6 +5,8 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import asyncio
 from aiogram.fsm.context import FSMContext
+
+import notifier
 import schedule_json as sch
 from new_db import *
 
@@ -16,6 +18,9 @@ with open('http_api.txt') as f:
 class Form(StatesGroup):
     idle = State()
     edit_schedule = State()
+    edit_schedule_delete = State()
+    edit_schedule_add = State()
+    edit_remind_time = State()
 
 # Глобальные переменные
 json_name = 'schedule.json'
@@ -40,15 +45,29 @@ def create_main_menu():
 
 def create_schedule_menu(user_id):
     builder = InlineKeyboardBuilder()
+    
     builder.add(
         InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule'),
         InlineKeyboardButton(text='Назад', callback_data='back_to_main')
     )
+
     if has_elder_rights(user_id):
         builder.add(
             InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
             InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
         )
+
+    builder.adjust(1)
+    return builder.as_markup()
+
+def create_profile_menu(user_id):
+    builder = InlineKeyboardBuilder()
+
+    builder.add(
+        InlineKeyboardButton(text='Назад', callback_data='back_to_main'),
+        InlineKeyboardButton(text="Изменить время напоминания", callback_data="edit_remind_time")
+    )
+
     builder.adjust(1)
     return builder.as_markup()
 
@@ -66,7 +85,7 @@ async def send_welcome(message: Message, state: FSMContext):
 @router.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
     await call.answer()
-    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.")
+    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.", reply_markup=create_profile_menu(call.from_user.id))
 
 # Расписание
 @router.callback_query(F.data == "schedule", StateFilter(Form.idle))
@@ -88,13 +107,33 @@ async def view_schedule(call: CallbackQuery):
         response += f"{day}: {', '.join(lessons)}\n"
     await call.message.answer(response)
 
+
+@router.callback_query(F.data == "edit_remind_time", StateFilter(Form.idle))
+async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_remind_time)
+    await call.message.answer("Введите время напоминания в формате HH:MM :")
+
+@router.message(F.text, StateFilter(Form.edit_remind_time))
+async def handle_edit_remind_time(message: Message, state: FSMContext):
+    time = message.text
+
+    if not is_right_time_format(time):
+        await message.answer(f"Укажите время в формате HH:MM.")
+        return
+
+    set_remind_time(message.from_user.id, time)
+    notifier.add_notifier(message.from_user.id, time)
+    await message.answer(f"Время напоминания установлено.")
+
 # Добавление предмета
 @router.callback_query(F.data == "add_subject")
-async def add_subject_prompt(call: CallbackQuery):
+async def add_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
+    await state.set_state(Form.edit_schedule_add)
     await call.message.answer("Введите день недели и предмет через запятую (например, Monday, Math):")
 
-@router.message(F.text, StateFilter(Form.edit_schedule))
+@router.message(F.text, StateFilter(Form.edit_schedule_add))
 async def handle_add_subject(message: Message, state: FSMContext):
     if not has_elder_rights(message.from_user.id):
         await message.answer("У вас нет прав старосты.")
@@ -108,11 +147,12 @@ async def handle_add_subject(message: Message, state: FSMContext):
 
 # Удаление предмета
 @router.callback_query(F.data == "remove_subject")
-async def remove_subject_prompt(call: CallbackQuery):
+async def remove_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
+    await state.set_state(Form.edit_schedule_delete)
     await call.message.answer("Введите название предмета для удаления:")
 
-@router.message(F.text, StateFilter(Form.edit_schedule))
+@router.message(F.text, StateFilter(Form.edit_schedule_delete))
 async def handle_remove_subject(message: Message, state: FSMContext):
     if not has_elder_rights(message.from_user.id):
         await message.answer("У вас нет прав старосты.")
@@ -122,7 +162,7 @@ async def handle_remove_subject(message: Message, state: FSMContext):
     await message.answer(f"Попытка удалить предмет '{subject}' завершена.")
 
 # В главное меню
-@router.callback_query(F.data == "back_to_main", StateFilter(Form.edit_schedule))
+@router.callback_query(F.data == "back_to_main")
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
@@ -135,6 +175,7 @@ async def back_to_main(call: CallbackQuery, state: FSMContext):
 async def main():
     await bot.delete_webhook()
     init_database()
+    notifier.initialise_all_notifiers()
     await dp.start_polling(bot)
 
 if __name__ == '__main__':
