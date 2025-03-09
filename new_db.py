@@ -53,9 +53,13 @@ def is_elder(user_id) -> bool:
         print(f"Is {user_id} elder: {bool(res[0])}")
         return bool(res[0])
 
-def get_remind_time(user_id) -> str:
+def get_remind_time(user_id) -> str | None:
     with create_connection() as client:
         res = client.execute(f"SELECT remind_time FROM users WHERE user_id='{user_id}'").fetchone()
+
+        if not bool(res) or res == "":
+            return None
+
         return res[0]
 
 def is_right_time_format(time: str) -> bool:
@@ -78,12 +82,15 @@ def is_right_time_format(time: str) -> bool:
 
     return True
 
-def set_remind_time(user_id, time: str):
+def set_remind_time(user_id, time: str | None):
     if not user_exists(user_id):
         return
 
     if not is_right_time_format(time):
         return
+
+    if time is None:
+        time = ""
 
     with create_connection() as client:
         client.execute(f"UPDATE users SET remind_time='{time}' WHERE user_id='{user_id}'")

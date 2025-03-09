@@ -28,9 +28,18 @@ def add_notifier(user_id, time):
 
     scheduler.add_job(notify, id = notify_id, trigger=trigger, args=[user_id])
 
+def remove_notifier(user_id):
+    notify_id = "notify_" + str(user_id)
+    scheduler.remove_job(job_id=notify_id)
+    print("Removed notifier for " + str(user_id))
+
 def initialise_all_notifiers():
     with new_db.create_connection() as client:
         users = client.execute("SELECT user_id, remind_time FROM users").fetchall()
         for user in users:
-            add_notifier(user[0], user[1])
+            user_id = user[0]
+            time = user[1]
+
+            if time != "":
+                add_notifier(user[0], user[1])
     scheduler.start()
