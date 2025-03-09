@@ -47,14 +47,17 @@ def create_schedule_menu(user_id):
     builder = InlineKeyboardBuilder()
     
     builder.add(
-        InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule'),
-        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
-    )
+        InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule')
+        )
 
     if has_elder_rights(user_id):
         builder.add(
             InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
             InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
+        )
+        
+    builder.row(
+        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
         )
 
     builder.adjust(1)
@@ -64,8 +67,8 @@ def create_profile_menu(user_id):
     builder = InlineKeyboardBuilder()
 
     builder.add(
-        InlineKeyboardButton(text='Назад', callback_data='back_to_main'),
-        InlineKeyboardButton(text="Изменить время напоминания", callback_data="edit_remind_time")
+        InlineKeyboardButton(text="Изменить время напоминания", callback_data="edit_remind_time"),
+        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
     )
 
     builder.adjust(1)
