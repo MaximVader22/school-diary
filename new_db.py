@@ -101,7 +101,8 @@ def has_elder_rights(user_id) -> bool:
         return False
 
     with create_connection() as client:
-        res = client.execute(f"SELECT is_admin, is_elder FROM users WHERE user_id='{user_id}'").fetchone()
+        res = client.execute(f"SELECT is_admin, is_elder FROM users 
+                               WHERE user_id='{user_id}'").fetchone()
         print(f"Is {user_id} admin: {bool(res[0])}")
         print(f"Is {user_id} elder: {bool(res[1])}")
         return bool(res[0]) or bool(res[1])
