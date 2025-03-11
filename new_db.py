@@ -25,7 +25,8 @@ def create_user(user_id, is_admin=False, is_elder=False, remind_time=""):
     print(f"Trying to create user {user_id}...")
     with create_connection() as client:
         if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone():
-            client.execute(f"INSERT INTO users (user_id, is_admin, is_elder, remind_time) VALUES ('{user_id}', {is_admin}, {is_elder}, '{remind_time}')")
+            client.execute(f"INSERT INTO users (user_id, is_admin, is_elder, remind_time) 
+                             VALUES ('{user_id}', {is_admin}, {is_elder}, '{remind_time}')")
             print(f"Created user {user_id}...")
             client.commit()
 
