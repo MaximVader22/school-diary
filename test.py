@@ -79,7 +79,8 @@ def create_profile_menu(user_id):
 async def send_welcome(message: Message, state: FSMContext):
     create_user(message.from_user.id, is_admin=are_users_empty())
     await state.set_state(Form.idle)
-    await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
+    await message.answer("Приветствую! Используйте кнопки для навигации.", 
+                         reply_markup=create_main_menu())
 
 '''
 ### Callback-функции ###
@@ -88,14 +89,16 @@ async def send_welcome(message: Message, state: FSMContext):
 @router.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
     await call.answer()
-    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.", reply_markup=create_profile_menu(call.from_user.id))
+    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.", 
+                              reply_markup=create_profile_menu(call.from_user.id))
 
 # Расписание
 @router.callback_query(F.data == "schedule", StateFilter(Form.idle))
 async def schedule(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule)
-    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.from_user.id))
+    await call.message.answer("Выберите действие:", 
+                              reply_markup=create_schedule_menu(call.from_user.id))
 
 # Просмотр расписания
 @router.callback_query(F.data == "view_schedule")
