@@ -180,7 +180,8 @@ async def handle_remove_subject(message: Message, state: FSMContext):
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
-    await call.message.answer("Вы вернулись в главное меню.", reply_markup=create_main_menu())
+    await call.message.answer("Вы вернулись в главное меню.", 
+                              reply_markup=create_main_menu())
 
 '''
 ### MAIN-функция ###
