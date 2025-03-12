@@ -11,21 +11,16 @@ async def notify(user_id):
 
 def add_notifier(user_id, time):
     notify_id = "notify_" + str(user_id)
-
     if scheduler.get_job(job_id=notify_id):
         scheduler.remove_job(job_id=notify_id)
         print("Removed previous notifier for " + str(user_id))
-
     print("Added notifier for " + str(user_id) + " in " + time)
-
     time_split = time.split(":")
     hour = time_split[0]
     minute = time_split[1]
-
     trigger = CronTrigger(
         year="*", month="*", day="*", hour=hour, minute=minute, second="0"
     )
-
     scheduler.add_job(notify, id = notify_id, trigger=trigger, args=[user_id])
 
 def remove_notifier(user_id):
