@@ -2,3 +2,4 @@ venv/
 __pycache__/
 http_api.txt
 database.db
+schedule.json

@@ -9,7 +9,7 @@ def init_database():
         client.execute("""
             CREATE TABLE IF NOT EXISTS users(
                 user_id TEXT PRIMARY KEY,
-                name TEXT
+                name TEXT,
                 is_admin INTEGER DEFAULT 0,
                 is_elder INTEGER DEFAULT 0,
                 remind_time TEXT
@@ -83,6 +83,14 @@ def is_right_time_format(time: str) -> bool:
 
     return True
 
+def is_right_date_format(date: str) -> bool:
+    for i in (0, 1, 3, 4, 6, 7, 8, 9, 11, 12, 14, 15):
+        if not date[i].isnumeric():
+            return False
+    if date[2] == '.' and date[5] == '.' and date[10] == ' ' and date[13] == ':':
+        return True
+    return False
+
 def set_remind_time(user_id, time: str | None):
     if not user_exists(user_id):
         return
@@ -105,6 +113,10 @@ def has_elder_rights(user_id) -> bool:
         print(f"Is {user_id} admin: {bool(res[0])}")
         print(f"Is {user_id} elder: {bool(res[1])}")
         return bool(res[0]) or bool(res[1])
+    
+def get_all_user_ids():
+     with create_connection() as client:
+        return client.execute("SELECT user_id FROM users").fetchall()
 
 if __name__ == '__main__':
     init_database()

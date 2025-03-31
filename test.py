@@ -3,8 +3,9 @@ from aiogram.filters.state import State, StatesGroup, StateFilter
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-import asyncio
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
+import asyncio
 
 import notifier
 import schedule_json as sch
@@ -21,6 +22,8 @@ class Form(StatesGroup):
     edit_schedule_delete = State()
     edit_schedule_add = State()
     edit_remind_time = State()
+    create_announcement = State()
+    create_event = State()
 
 # Глобальные переменные
 json_name = 'schedule.json'
@@ -34,7 +37,7 @@ dp.include_router(router)
 '''
 ### Кнопки ###
 '''
-def create_main_menu():
+def create_main_menu(user_id):
     builder = InlineKeyboardBuilder()
 
     builder.add(
@@ -43,6 +46,11 @@ def create_main_menu():
         InlineKeyboardButton(text='Расписание', 
                              callback_data='schedule')
     )
+    if is_elder(user_id) or is_admin(user_id):
+        builder.add(
+            InlineKeyboardButton(text='Сделать объявление', callback_data='create_announcement'),
+            InlineKeyboardButton(text='Сделать объявление о мероприятии', callback_data='create_event'),
+        )
 
     builder.adjust(1)
     return builder.as_markup()
@@ -90,7 +98,7 @@ async def send_welcome(message: Message, state: FSMContext):
     create_user(message.from_user.id, "", is_admin=are_users_empty())
     await state.set_state(Form.idle)
     await message.answer("Приветствую! Используйте кнопки для навигации.", 
-                         reply_markup=create_main_menu())
+                         reply_markup=create_main_menu(message.from_user.id))
 
 '''
 ### Callback-функции ###
@@ -188,13 +196,50 @@ async def handle_remove_subject(message: Message, state: FSMContext):
     sch.remove_one_subject(json_name, subject)
     await message.answer(f"Попытка удалить предмет '{subject}' завершена.")
 
+# Создание объявления
+@router.callback_query(F.data == "create_announcement")
+async def create_announcement(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.create_announcement)
+    await call.message.answer("Введите ваше объявление или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
+
+@router.message(F.text, StateFilter(Form.create_announcement))
+async def handle_create_announcement(message: Message, state: FSMContext):
+    await state.set_state(Form.idle)
+    if message.text == "Отмена":
+        await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+    else:
+        for user_id in get_all_user_ids():
+            await bot.send_message(user_id[0], message.text)
+        await message.answer("Объявление создано. Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+
+# Создание объявления о мероприятии
+@router.callback_query(F.data == "create_event")
+async def create_event(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.create_event)
+    await call.message.answer("Введите ваше объявление в формате _Название, Время \(DD\.MM\.YYYY HH:MM\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
+
+@router.message(F.text, StateFilter(Form.create_event))
+async def handle_create_event(message: Message, state: FSMContext):
+    if len(message.text) > 18 and is_right_date_format(message.text[-16:]):
+        await state.set_state(Form.idle)
+        if message.text == "Отмена":
+            await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+        else:
+            for user_id in get_all_user_ids():
+                await bot.send_message(user_id[0], message.text)
+            await message.answer("Объявление создано. Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+    else:
+        await message.answer("Неправильный формат сообщения")
+
 # В главное меню
 @router.callback_query(F.data == "back_to_main")
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
     await call.message.answer("Вы вернулись в главное меню.", 
-                              reply_markup=create_main_menu())
+                              reply_markup=create_main_menu(call.from_user.id))
 
 '''
 ### MAIN-функция ###
