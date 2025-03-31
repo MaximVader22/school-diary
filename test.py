@@ -38,8 +38,10 @@ def create_main_menu():
     builder = InlineKeyboardBuilder()
 
     builder.add(
-        InlineKeyboardButton(text='Профиль', callback_data='profile'),
-        InlineKeyboardButton(text='Расписание', callback_data='schedule')
+        InlineKeyboardButton(text='Профиль', 
+                             callback_data='profile'),
+        InlineKeyboardButton(text='Расписание', 
+                             callback_data='schedule')
     )
 
     builder.adjust(1)
@@ -49,17 +51,21 @@ def create_schedule_menu(user_id):
     builder = InlineKeyboardBuilder()
     
     builder.add(
-        InlineKeyboardButton(text='Просмотреть расписание', callback_data='view_schedule')
+        InlineKeyboardButton(text='Просмотреть расписание', 
+                             callback_data='view_schedule')
         )
 
     if has_elder_rights(user_id):
         builder.add(
-            InlineKeyboardButton(text='Добавить предмет', callback_data='add_subject'),
-            InlineKeyboardButton(text='Удалить предмет', callback_data='remove_subject'),
+            InlineKeyboardButton(text='Добавить предмет', 
+                                 callback_data='add_subject'),
+            InlineKeyboardButton(text='Удалить предмет', 
+                                 callback_data='remove_subject'),
         )
         
     builder.row(
-        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
+        InlineKeyboardButton(text='Назад', 
+                             callback_data='back_to_main')
         )
 
     builder.adjust(1)
@@ -69,8 +75,10 @@ def create_profile_menu(user_id):
     builder = InlineKeyboardBuilder()
 
     builder.add(
-        InlineKeyboardButton(text="Изменить время напоминания", callback_data="edit_remind_time"),
-        InlineKeyboardButton(text='Назад', callback_data='back_to_main')
+        InlineKeyboardButton(text="Изменить время напоминания", 
+                             callback_data="edit_remind_time"),
+        InlineKeyboardButton(text='Назад', 
+                             callback_data='back_to_main')
     )
 
     builder.adjust(1)
@@ -81,7 +89,8 @@ def create_profile_menu(user_id):
 async def send_welcome(message: Message, state: FSMContext):
     create_user(message.from_user.id, "", is_admin=are_users_empty())
     await state.set_state(Form.idle)
-    await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
+    await message.answer("Приветствую! Используйте кнопки для навигации.", 
+                         reply_markup=create_main_menu())
 
 '''
 ### Callback-функции ###
@@ -90,14 +99,16 @@ async def send_welcome(message: Message, state: FSMContext):
 @router.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
     await call.answer()
-    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.", reply_markup=create_profile_menu(call.from_user.id))
+    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.", 
+                              reply_markup=create_profile_menu(call.from_user.id))
 
 # Расписание
 @router.callback_query(F.data == "schedule", StateFilter(Form.idle))
 async def schedule(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule)
-    await call.message.answer("Выберите действие:", reply_markup=create_schedule_menu(call.from_user.id))
+    await call.message.answer("Выберите действие:", 
+                              reply_markup=create_schedule_menu(call.from_user.id))
 
 # Просмотр расписания
 @router.callback_query(F.data == "view_schedule")
@@ -182,7 +193,8 @@ async def handle_remove_subject(message: Message, state: FSMContext):
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
-    await call.message.answer("Вы вернулись в главное меню.", reply_markup=create_main_menu())
+    await call.message.answer("Вы вернулись в главное меню.", 
+                              reply_markup=create_main_menu())
 
 '''
 ### MAIN-функция ###
