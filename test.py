@@ -36,10 +36,12 @@ dp.include_router(router)
 '''
 def create_main_menu():
     builder = InlineKeyboardBuilder()
+
     builder.add(
         InlineKeyboardButton(text='Профиль', callback_data='profile'),
         InlineKeyboardButton(text='Расписание', callback_data='schedule')
     )
+
     builder.adjust(1)
     return builder.as_markup()
 
@@ -77,7 +79,7 @@ def create_profile_menu(user_id):
 # Обработчик команды /start
 @router.message(Command("start"))
 async def send_welcome(message: Message, state: FSMContext):
-    create_user(message.from_user.id, is_admin=are_users_empty())
+    create_user(message.from_user.id, "", is_admin=are_users_empty())
     await state.set_state(Form.idle)
     await message.answer("Приветствую! Используйте кнопки для навигации.", reply_markup=create_main_menu())
 
@@ -101,13 +103,18 @@ async def schedule(call: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "view_schedule")
 async def view_schedule(call: CallbackQuery):
     await call.answer()
+
     schedule_data = sch.load_schedule(json_name)
+
     if not schedule_data:
         await call.message.answer("Расписание пустое.")
         return
+
     response = "Ваше текущее расписание:\n"
+
     for day, lessons in schedule_data.items():
         response += f"{day}: {', '.join(lessons)}\n"
+
     await call.message.answer(response)
 
 
@@ -134,7 +141,7 @@ async def handle_edit_remind_time(message: Message, state: FSMContext):
 async def add_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule_add)
-    await call.message.answer("Введите день недели и предмет через запятую (например, Monday, Math):")
+    await call.message.answer("Введите день недели, предмет, время начала и время конца через запятую (например: `Monday, Math, 8:30, 9:10`):")
 
 @router.message(F.text, StateFilter(Form.edit_schedule_add))
 async def handle_add_subject(message: Message, state: FSMContext):
@@ -142,8 +149,13 @@ async def handle_add_subject(message: Message, state: FSMContext):
         await message.answer("У вас нет прав старосты.")
         return
     try:
-        day, subject = map(str.strip, message.text.split(',', 1))
-        sch.add_schedule(json_name, day, [subject])
+        day, subject, start_time, end_time = map(str.strip, message.text.split(',', 3))
+
+        if not is_right_time_format(start_time) or not is_right_time_format(end_time):
+            await message.answer("Неверный формат ввода времени: HH:MM")
+            return
+
+        sch.add_schedule(json_name, day, subject, start_time, end_time)
         await message.answer(f"Предмет '{subject}' успешно добавлен на {day}.")
     except ValueError:
         await message.answer("Неверный формат ввода. Пожалуйста, используйте формат: день, предмет.")
@@ -160,6 +172,7 @@ async def handle_remove_subject(message: Message, state: FSMContext):
     if not has_elder_rights(message.from_user.id):
         await message.answer("У вас нет прав старосты.")
         return
+
     subject = message.text.strip()
     sch.remove_one_subject(json_name, subject)
     await message.answer(f"Попытка удалить предмет '{subject}' завершена.")

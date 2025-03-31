@@ -9,6 +9,7 @@ def init_database():
         client.execute("""
             CREATE TABLE IF NOT EXISTS users(
                 user_id TEXT PRIMARY KEY,
+                name TEXT
                 is_admin INTEGER DEFAULT 0,
                 is_elder INTEGER DEFAULT 0,
                 remind_time TEXT
@@ -21,11 +22,11 @@ def are_users_empty():
     with create_connection() as client:
         return not bool(client.execute("SELECT * FROM users").fetchone())
 
-def create_user(user_id, is_admin=False, is_elder=False, remind_time=""):
+def create_user(user_id, name, is_admin=False, is_elder=False, remind_time=""):
     print(f"Trying to create user {user_id}...")
     with create_connection() as client:
         if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone():
-            client.execute(f"INSERT INTO users (user_id, is_admin, is_elder, remind_time) VALUES ('{user_id}', {is_admin}, {is_elder}, '{remind_time}')")
+            client.execute(f"INSERT INTO users (user_id, name, is_admin, is_elder, remind_time) VALUES ('{user_id}', '{name}', {is_admin}, {is_elder}, '{remind_time}')")
             print(f"Created user {user_id}...")
             client.commit()
 
