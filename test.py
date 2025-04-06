@@ -20,6 +20,9 @@ class Form(StatesGroup):
     edit_schedule = State()
     edit_schedule_delete = State()
     edit_schedule_add = State()
+    edit_elders = State()
+    edit_elders_delete = State()
+    edit_elders_add = State()
     edit_remind_time = State()
 
 # Глобальные переменные
@@ -34,7 +37,7 @@ dp.include_router(router)
 '''
 ### Кнопки ###
 '''
-def create_main_menu():
+def create_main_menu(user_id):
     builder = InlineKeyboardBuilder()
 
     builder.add(
@@ -43,6 +46,12 @@ def create_main_menu():
         InlineKeyboardButton(text='Расписание', 
                              callback_data='schedule')
     )
+
+    if is_admin(user_id):
+        builder.add(
+            InlineKeyboardButton(text='Старосты',
+                                 callback_data='elders'),
+        )
 
     builder.adjust(1)
     return builder.as_markup()
@@ -84,13 +93,34 @@ def create_profile_menu(user_id):
     builder.adjust(1)
     return builder.as_markup()
 
+
+def create_elders_menu(user_id):
+    builder = InlineKeyboardBuilder()
+
+    if is_admin(user_id):
+        builder.add(
+            InlineKeyboardButton(text='Добавить старосту',
+                                 callback_data='add_elder'),
+            InlineKeyboardButton(text='Удалить старосту',
+                                 callback_data='remove_elder'),
+        )
+
+    builder.row(
+        InlineKeyboardButton(text='Назад',
+                             callback_data='back_to_main')
+    )
+
+    builder.adjust(1)
+    return builder.as_markup()
+
 # Обработчик команды /start
 @router.message(Command("start"))
 async def send_welcome(message: Message, state: FSMContext):
-    create_user(message.from_user.id, "", is_admin=are_users_empty())
+    create_user(message.from_user.id, None, is_admin=are_users_empty())
+    set_username(message.from_user.id, message.from_user.username)
     await state.set_state(Form.idle)
     await message.answer("Приветствую! Используйте кнопки для навигации.", 
-                         reply_markup=create_main_menu())
+                         reply_markup=create_main_menu(message.from_user.id))
 
 '''
 ### Callback-функции ###
@@ -110,6 +140,14 @@ async def schedule(call: CallbackQuery, state: FSMContext):
     await call.message.answer("Выберите действие:", 
                               reply_markup=create_schedule_menu(call.from_user.id))
 
+# Старосты
+@router.callback_query(F.data == "elders", StateFilter(Form.idle))
+async def elders(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_elders)
+    await call.message.answer("Выберите действие:",
+                              reply_markup=create_elders_menu(call.from_user.id))
+
 # Просмотр расписания
 @router.callback_query(F.data == "view_schedule")
 async def view_schedule(call: CallbackQuery):
@@ -128,7 +166,7 @@ async def view_schedule(call: CallbackQuery):
 
     await call.message.answer(response)
 
-
+# Установка времени напоминания
 @router.callback_query(F.data == "edit_remind_time", StateFilter(Form.idle))
 async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
@@ -188,13 +226,57 @@ async def handle_remove_subject(message: Message, state: FSMContext):
     sch.remove_one_subject(json_name, subject)
     await message.answer(f"Попытка удалить предмет '{subject}' завершена.")
 
+# Добавление старосты
+@router.callback_query(F.data == "add_elder")
+async def add_elder_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_elders_add)
+    await call.message.answer("Введите имя пользователя нового старосты:")
+
+@router.message(F.text, StateFilter(Form.edit_elders_add))
+async def handle_add_elder(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        await message.answer("У вас нет прав администратора.")
+        return
+
+    username = message.text.strip()
+
+    if not username_exists(username):
+        await message.answer("Не найден пользователь с таким именем.")
+        return
+
+    set_elder(id_from_username(username), True)
+    await message.answer(f"{username} назначен старостой.")
+
+# Удаление старосты
+@router.callback_query(F.data == "remove_elder")
+async def remove_elder_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_elders_delete)
+    await call.message.answer("Введите имя пользователя старосты, которого надо удалить:")
+
+@router.message(F.text, StateFilter(Form.edit_elders_delete))
+async def handle_remove_elder(message: Message, state: FSMContext):
+    if not is_admin(message.from_user.id):
+        await message.answer("У вас нет прав администратора.")
+        return
+
+    username = message.text.strip()
+
+    if not username_exists(username):
+        await message.answer("Не найден пользователь с таким именем.")
+        return
+
+    set_elder(id_from_username(username), False)
+    await message.answer(f"{username} больше не староста.")
+
 # В главное меню
 @router.callback_query(F.data == "back_to_main")
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
     await call.message.answer("Вы вернулись в главное меню.", 
-                              reply_markup=create_main_menu())
+                              reply_markup=create_main_menu(call.from_user.id))
 
 '''
 ### MAIN-функция ###

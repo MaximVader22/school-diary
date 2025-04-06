@@ -9,7 +9,7 @@ def init_database():
         client.execute("""
             CREATE TABLE IF NOT EXISTS users(
                 user_id TEXT PRIMARY KEY,
-                name TEXT
+                username TEXT NULLABLE UNIQUE,
                 is_admin INTEGER DEFAULT 0,
                 is_elder INTEGER DEFAULT 0,
                 remind_time TEXT
@@ -22,11 +22,11 @@ def are_users_empty():
     with create_connection() as client:
         return not bool(client.execute("SELECT * FROM users").fetchone())
 
-def create_user(user_id, name, is_admin=False, is_elder=False, remind_time=""):
+def create_user(user_id, username, is_admin=False, is_elder=False, remind_time=""):
     print(f"Trying to create user {user_id}...")
     with create_connection() as client:
         if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone():
-            client.execute(f"INSERT INTO users (user_id, name, is_admin, is_elder, remind_time) VALUES ('{user_id}', '{name}', {is_admin}, {is_elder}, '{remind_time}')")
+            client.execute(f"INSERT INTO users (user_id, username, is_admin, is_elder, remind_time) VALUES ('{user_id}', '{username}', {is_admin}, {is_elder}, '{remind_time}')")
             print(f"Created user {user_id}...")
             client.commit()
 
@@ -35,6 +35,17 @@ def user_exists(user_id) -> bool:
         res = client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone()
         print(f"User {user_id} exists: {bool(res)}")
         return bool(res)
+
+def username_exists(username) -> bool:
+    with create_connection() as client:
+        res = client.execute(f"SELECT * FROM users WHERE username='{username}'").fetchone()
+        print(f"User {username} exists: {bool(res)}")
+        return bool(res)
+
+def id_from_username(username):
+    with create_connection() as client:
+        res = client.execute(f"SELECT user_id FROM users WHERE username='{username}'").fetchone()
+        return res[0]
 
 def is_admin(user_id) -> bool:
     if not user_exists(user_id):
@@ -95,6 +106,20 @@ def set_remind_time(user_id, time: str | None):
 
     with create_connection() as client:
         client.execute(f"UPDATE users SET remind_time='{time}' WHERE user_id='{user_id}'")
+
+def set_username(user_id, username: str):
+    if not user_exists(user_id):
+        return
+
+    with create_connection() as client:
+        client.execute(f"UPDATE users SET username='{username}' WHERE user_id='{user_id}'")
+
+def set_elder(user_id, elder: bool):
+    if not user_exists(user_id):
+        return
+
+    with create_connection() as client:
+        client.execute(f"UPDATE users SET is_elder='{int(elder)}' WHERE user_id='{user_id}'")
 
 def has_elder_rights(user_id) -> bool:
     if not user_exists(user_id):
