@@ -183,10 +183,10 @@ async def view_schedule(call: CallbackQuery):
     response = "Ваше текущее расписание:\n"
 
     for day, lessons in schedule_data.items():
-        print(f"{day}:\n")
+        response += f"{day}:\n"
         for lesson in lessons:
             response += f'{lesson["name"]}: {lesson["start_time"]}-{lesson["end_time"]}\n'
-        print('\n')
+        response += '\n'
 
     await call.message.answer(response)
 
@@ -337,15 +337,14 @@ async def create_event(call: CallbackQuery, state: FSMContext):
 
 @router.message(F.text, StateFilter(Form.create_event))
 async def handle_create_event(message: Message, state: FSMContext):
-    if len(message.text) > 18 and is_right_date_format(message.text[-16:]):
-        await state.set_state(Form.idle)
-        if message.text == "Отмена":
+    if message.text == "Отмена":
             await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
-        else:
-            for user_id in get_all_user_ids():
-                await bot.send_message(user_id[0], message.text)
-            await message.answer("Объявление создано. Вы возвращены в главное меню",
-                                 reply_markup=create_main_menu(message.from_user.id))
+    elif len(message.text) > 18 and is_right_date_format(message.text[-16:]):
+        await state.set_state(Form.idle)
+        for user_id in get_all_user_ids():
+            await bot.send_message(user_id[0], message.text)
+        await message.answer("Объявление создано. Вы возвращены в главное меню",
+                             reply_markup=create_main_menu(message.from_user.id))
     else:
         await message.answer("Неправильный формат сообщения")
 
