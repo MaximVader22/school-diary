@@ -183,7 +183,10 @@ async def view_schedule(call: CallbackQuery):
     response = "Ваше текущее расписание:\n"
 
     for day, lessons in schedule_data.items():
-        response += f"{day}: {', '.join(lessons)}\n"
+        print(f"{day}:\n")
+        for lesson in lessons:
+            response += f'{lesson["name"]}: {lesson["start_time"]}-{lesson["end_time"]}\n'
+        print('\n')
 
     await call.message.answer(response)
 
