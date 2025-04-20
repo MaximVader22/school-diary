@@ -15,6 +15,7 @@ from new_db import *
 with open('http_api.txt') as f:
     token = f.read().strip()
 
+DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
 # Состояния
 class Form(StatesGroup):
@@ -180,15 +181,16 @@ async def view_schedule(call: CallbackQuery):
         await call.message.answer("Расписание пустое.")
         return
 
-    response = "Ваше текущее расписание:\n"
+    response_parts = ['Ваше текущее расписание:\n ', '', '', '', '', '', '']
 
     for day, lessons in schedule_data.items():
-        response += f"{day}:\n"
+        response_part = f"{day}:\n"
         for lesson in lessons:
-            response += f'{lesson["name"]}: {lesson["start_time"]}-{lesson["end_time"]}\n'
-        response += '\n'
+            response_part += f'{lesson["name"]}: {lesson["start_time"]}-{lesson["end_time"]}\n'
+        response_part += '\n'
+        response_parts[DAYS_OF_WEEK.index(day)] += response_part
 
-    await call.message.answer(response)
+    await call.message.answer(' '.join(response_parts))
 
 
 # Установка времени напоминания
@@ -228,6 +230,7 @@ async def handle_add_subject(message: Message, state: FSMContext):
         return
     try:
         day, subject, start_time, end_time = map(str.strip, message.text.split(',', 3))
+        assert day in DAYS_OF_WEEK
 
         if not is_right_time_format(start_time) or not is_right_time_format(end_time):
             await message.answer("Неверный формат ввода времени: HH:MM")
@@ -235,8 +238,11 @@ async def handle_add_subject(message: Message, state: FSMContext):
 
         sch.add_schedule(json_name, day, subject, start_time, end_time)
         await message.answer(f"Предмет '{subject}' успешно добавлен на {day}.")
+        await state.set_state(Form.idle)
     except ValueError:
         await message.answer("Неверный формат ввода. Пожалуйста, используйте формат: день, предмет.")
+    except AssertionError:
+        await message.answer("Неверный формат ввода дня недели.")
 
 
 # Удаление предмета
@@ -309,7 +315,9 @@ async def handle_remove_elder(message: Message, state: FSMContext):
 # Создание объявления
 @router.callback_query(F.data == "create_announcement")
 async def create_announcement(call: CallbackQuery, state: FSMContext):
-    await call.answer()
+    if not has_elder_rights(call.from_user.id):
+        await call.answer("У вас нет прав для этого.")
+        return
     await state.set_state(Form.create_announcement)
     await call.message.answer("Введите ваше объявление или напишите *Отмена*, если вы не хотите создавать объявление",
                               parse_mode=ParseMode.MARKDOWN_V2)
@@ -318,7 +326,9 @@ async def create_announcement(call: CallbackQuery, state: FSMContext):
 @router.message(F.text, StateFilter(Form.create_announcement))
 async def handle_create_announcement(message: Message, state: FSMContext):
     await state.set_state(Form.idle)
-    if message.text == "Отмена":
+    if not has_elder_rights(message.from_user.id):
+        await message.answer("У вас нет прав для этого.")
+    elif message.text == "Отмена":
         await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
     else:
         for user_id in get_all_user_ids():
@@ -330,14 +340,18 @@ async def handle_create_announcement(message: Message, state: FSMContext):
 # Создание объявления о мероприятии
 @router.callback_query(F.data == "create_event")
 async def create_event(call: CallbackQuery, state: FSMContext):
-    await call.answer()
+    if not has_elder_rights(call.from_user.id):
+        await call.answer("У вас нет прав для этого.")
+        return
     await state.set_state(Form.create_event)
     await call.message.answer("Введите ваше объявление в формате _Название, Время \(DD\.MM\.YYYY HH:MM\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
 
 
 @router.message(F.text, StateFilter(Form.create_event))
 async def handle_create_event(message: Message, state: FSMContext):
-    if message.text == "Отмена":
+    if not has_elder_rights(message.from_user.id):
+        await message.answer("У вас нет прав для этого.")
+    elif message.text == "Отмена":
             await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
     elif len(message.text) > 18 and is_right_date_format(message.text[-16:]):
         await state.set_state(Form.idle)
