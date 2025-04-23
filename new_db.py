@@ -22,7 +22,7 @@ def are_users_empty():
     with create_connection() as client:
         return not bool(client.execute("SELECT * FROM users").fetchone())
 
-def create_user(user_id, username, is_admin=False, is_elder=False, remind_time=""):
+def create_user(user_id, username, is_admin=True, is_elder=True, remind_time=""):
     print(f"Trying to create user {user_id}...")
     with create_connection() as client:
         if not client.execute(f"SELECT * FROM users WHERE user_id='{user_id}'").fetchone():
