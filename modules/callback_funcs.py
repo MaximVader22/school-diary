@@ -7,11 +7,8 @@ from aiogram.enums import ParseMode
 
 from modules.FSM_states import *
 from modules.create_menu import *
-import modules.schedule_json as sch
 
 router = Router()
-dp = Dispatcher()
-dp.include_router(router)
 
 DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 

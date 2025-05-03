@@ -11,8 +11,6 @@ import modules.schedule_json as sch
 import modules.notifier as notifier
 
 router = Router()
-dp = Dispatcher()
-dp.include_router(router)
 
 DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
