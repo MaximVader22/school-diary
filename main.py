@@ -5,7 +5,7 @@ import asyncio
 
 from modules.handlers import *
 from modules.callback_funcs import *
-
+#import pdb; pdb.set_trace()
 # Вставьте ваш токен вместо 'YOUR_BOT_TOKEN'
 with open('http_api.txt') as f:
     token = f.read().strip()
@@ -13,6 +13,7 @@ with open('http_api.txt') as f:
 # Инициализация бота и диспетчера
 bot = Bot(token=token)
 dp = Dispatcher()
+dp.include_router(router) 
 
 @router.message(F.text, StateFilter(Form.create_announcement))
 async def handle_create_announcement(message: Message, state: FSMContext):
