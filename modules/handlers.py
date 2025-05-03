@@ -10,12 +10,12 @@ from modules.create_menu import *
 import modules.schedule_json as sch
 import modules.notifier as notifier
 
-router = Router()
+router2 = Router()
 
 DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
 # Обработчик команды /start
-@router.message(Command("start"))
+@router2.message(Command("start"))
 async def send_welcome(message: Message, state: FSMContext):
     create_user(message.from_user.id, None, is_admin=are_users_empty())
     set_username(message.from_user.id, message.from_user.username)
@@ -23,7 +23,7 @@ async def send_welcome(message: Message, state: FSMContext):
     await message.answer("Приветствую! Используйте кнопки для навигации.",
                          reply_markup=create_main_menu(message.from_user.id))
 
-@router.message(F.text, StateFilter(Form.edit_remind_time))
+@router2.message(F.text, StateFilter(Form.edit_remind_time))
 async def handle_edit_remind_time(message: Message, state: FSMContext):
     time = message.text
 
@@ -37,7 +37,7 @@ async def handle_edit_remind_time(message: Message, state: FSMContext):
 
 
 
-@router.message(F.text, StateFilter(Form.edit_schedule_add))
+@router2.message(F.text, StateFilter(Form.edit_schedule_add))
 async def handle_add_subject(message: Message, state: FSMContext):
     if not has_elder_rights(message.from_user.id):
         await message.answer("У вас нет прав старосты.")
@@ -60,7 +60,7 @@ async def handle_add_subject(message: Message, state: FSMContext):
 
 
 
-@router.message(F.text, StateFilter(Form.edit_schedule_delete))
+@router2.message(F.text, StateFilter(Form.edit_schedule_delete))
 async def handle_remove_subject(message: Message, state: FSMContext):
     if not has_elder_rights(message.from_user.id):
         await message.answer("У вас нет прав старосты.")
@@ -72,7 +72,7 @@ async def handle_remove_subject(message: Message, state: FSMContext):
 
 
 
-@router.message(F.text, StateFilter(Form.edit_elders_add))
+@router2.message(F.text, StateFilter(Form.edit_elders_add))
 async def handle_add_elder(message: Message, state: FSMContext):
     if not is_admin(message.from_user.id):
         await message.answer("У вас нет прав администратора.")
@@ -89,7 +89,7 @@ async def handle_add_elder(message: Message, state: FSMContext):
 
 
 
-@router.message(F.text, StateFilter(Form.edit_elders_delete))
+@router2.message(F.text, StateFilter(Form.edit_elders_delete))
 async def handle_remove_elder(message: Message, state: FSMContext):
     if not is_admin(message.from_user.id):
         await message.answer("У вас нет прав администратора.")
