@@ -103,3 +103,27 @@ async def handle_remove_elder(message: Message, state: FSMContext):
 
     set_elder(id_from_username(username), False)
     await message.answer(f"{username} больше не староста.")
+
+@router2.message(F.text, StateFilter(Form.edit_homework_add))
+async def handle_add_homework(message: Message, state: FSMContext):
+    content = message.text.split(";")
+ 
+    if len(content) != 3:
+        await message.answer("Неверное количество аргументов")
+        return
+ 
+    date = content[0]
+    subject = content[1]
+    description = content[2]
+ 
+    if not is_right_homework_date_format(date):
+        await message.answer("Неверный формат даты")
+        return
+ 
+    data = await state.get_data()
+    photos = data.get("photos", [])
+ 
+    add_homework(date, subject, description, photos)
+ 
+    await message.answer(f"Домашнее задание было добавлено")
+    await state.clear()

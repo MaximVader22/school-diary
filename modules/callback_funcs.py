@@ -123,3 +123,37 @@ async def back_to_main(call: CallbackQuery, state: FSMContext):
     await state.set_state(Form.idle)
     await call.message.answer("Вы вернулись в главное меню.",
                               reply_markup=create_main_menu(call.from_user.id))
+
+# Домашнее задание
+@router.callback_query(F.data == "homework", StateFilter(Form.idle))
+async def homework(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_homework)
+    await call.message.answer("Выберите действие:",
+                                reply_markup=create_homework_menu(call.from_user.id))
+
+# Добавление домашнего задания
+@router.callback_query(F.data == "add_homework")
+async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_homework_add)
+    await call.message.answer("Введите дату истечения домашнего задания, название предмета и описание, разделяя их знаком ';'\nЧтобы добавить изображение, отправьте его отдельно.\nВы можете добавить до 10 изображений.")
+
+# Просмотр домашнего задания
+@router.callback_query(F.data == "list_homework")
+async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    collection = list_homework()
+
+    if len(collection) == 0:
+        await call.message.answer("Нет домашнего задания")
+        return
+
+    builder = InlineKeyboardBuilder()
+
+    for work in collection:
+        builder.add(InlineKeyboardButton(text=f"{work[0]} - {work[1]}: {work[2]}", callback_data="asdasd"))
+
+    builder.adjust(1)
+
+    await call.message.answer("Список домашнего задания:", reply_markup=builder.as_markup())

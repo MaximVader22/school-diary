@@ -3,3 +3,4 @@ __pycache__/
 http_api.txt
 database.db
 schedule.json
+mysql_connection.txt

@@ -84,3 +84,26 @@ def create_elders_menu(user_id):
 
     builder.adjust(1)
     return builder.as_markup()
+
+def create_homework_menu(user_id):
+     builder = InlineKeyboardBuilder()
+ 
+     builder.add(
+         InlineKeyboardButton(text='Добавить домашнее задание', callback_data='add_homework'),
+         InlineKeyboardButton(text='Удалить домашнее задание', callback_data='remove_homework'),
+         InlineKeyboardButton(text='Просмотреть домашнее задание', callback_data='list_homework'),
+     )
+ 
+     if has_elder_rights(user_id):
+         builder.add(
+             InlineKeyboardButton(text='Добавить домашнее задание', callback_data='add_homework'),
+             InlineKeyboardButton(text='Удалить домашнее задание', callback_data='remove_homework'),
+         )
+ 
+     builder.row(
+         InlineKeyboardButton(text='Назад',
+                              callback_data='back_to_main')
+     )
+ 
+     builder.adjust(1)
+     return builder.as_markup()
