@@ -1,6 +1,6 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-import new_db
+import modules.db_api as db_api
 import test
 
 scheduler = AsyncIOScheduler()
@@ -29,7 +29,7 @@ def remove_notifier(user_id):
     print("Removed notifier for " + str(user_id))
 
 def initialise_all_notifiers():
-    with new_db.create_connection() as client:
+    with db_api.create_connection() as client:
         users = client.execute("SELECT user_id, remind_time FROM users").fetchall()
         for user in users:
             user_id = user[0]

@@ -1,35 +1,55 @@
-from datetime import datetime
-import telebot, time
-from db_api import *
+from aiogram import Bot, Dispatcher, Router
+from modules.db_api import *
+import modules.notifier as notifier
+import asyncio
 
-WEEKDAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+from modules.handlers import *
+from modules.callback_funcs import *
 
+# Вставьте ваш токен вместо 'YOUR_BOT_TOKEN'
 with open('http_api.txt') as f:
-    bot = telebot.TeleBot(f.read())
+    token = f.read().strip()
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    create_user(message.chat.username, is_admin=True) # TODO первый пользователь админ, админ может присваивать статус админа другим пользователям
-    update_user_state(message.chat.username, "idle")
-    bot.send_message(message.chat.id, 'Приветсвуем Вас в нашем боте. Используйте команды из меню для навигации.', reply_markup=telebot.types.ReplyKeyboardRemove())
+# Инициализация бота и диспетчера
+bot = Bot(token=token)
+dp = Dispatcher()
 
-def idle(message):
-    # TODO отредактировать текста сообщений, чтобы они оказались адекватными
-    bot.send_message(message.chat.id, 'Используйте команды из меню для навигации.', reply_markup=telebot.types.ReplyKeyboardRemove())
+@router.message(F.text, StateFilter(Form.create_announcement))
+async def handle_create_announcement(message: Message, state: FSMContext):
+    await state.set_state(Form.idle)
+    if not has_elder_rights(message.from_user.id):
+        await message.answer("У вас нет прав для этого.")
+    elif message.text == "Отмена":
+        await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+    else:
+        for user_id in get_all_user_ids():
+            await bot.send_message(user_id[0], message.text)
+        await message.answer("Объявление создано. Вы возвращены в главное меню",
+                             reply_markup=create_main_menu(message.from_user.id))
 
-@bot.message_handler(commands=['status'])
-def status(message):
-    update_user_state(message.chat.username, "idle")
-    weekday = WEEKDAYS[datetime.weekday(datetime.fromtimestamp(time.mktime(time.localtime(message.date))))]
-    now = datetime.fromtimestamp(time.mktime(time.localtime(message.date)))
-    bot.send_message(message.chat.id, now, reply_markup=telebot.types.ReplyKeyboardRemove())
 
-@bot.message_handler(content_types=['text'])
-def repeat_all_messages(message):
-    state = get_user_state(message.chat.username)
-    if state == 'idle':
-        idle(message)
+
+@router.message(F.text, StateFilter(Form.create_event))
+async def handle_create_event(message: Message, state: FSMContext):
+    if not has_elder_rights(message.from_user.id):
+        await message.answer("У вас нет прав для этого.")
+    elif message.text == "Отмена":
+            await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+    elif len(message.text) > 18 and is_right_date_format(message.text[-16:]):
+        await state.set_state(Form.idle)
+        for user_id in get_all_user_ids():
+            await bot.send_message(user_id[0], message.text)
+        await message.answer("Объявление создано. Вы возвращены в главное меню",
+                             reply_markup=create_main_menu(message.from_user.id))
+    else:
+        await message.answer("Неправильный формат сообщения")
+
+async def main():
+    await bot.delete_webhook()
+    init_database()
+    notifier.initialise_all_notifiers()
+    await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
-    init_database()
-    bot.infinity_polling()
+    asyncio.run(main())
