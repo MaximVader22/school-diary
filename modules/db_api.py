@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import mysql.connector as mysql
 
 mysql_connection = {}
@@ -128,56 +130,25 @@ def get_remind_time(user_id) -> str | None:
         return res[0]
 
 def is_right_time_format(time: str) -> bool:
-    split = time.split(":")
-
-    if len(split) != 2:
+    try:
+        datetime.strptime(time, "%H:%M")
+        return True
+    except ValueError:
         return False
-
-    if not split[0].isnumeric() or not split[1].isnumeric():
-        return False
-
-    hour = int(split[0])
-    minute = int(split[1])
-
-    if hour < 0 or hour > 24:
-        return False
-
-    if minute < 0 or minute > 60:
-        return False
-
-    return True
 
 def is_right_date_format(date: str) -> bool:
-    if len(date) < 16:
-        return False
-
-    for i in (0, 1, 3, 4, 6, 7, 8, 9, 11, 12, 14, 15):
-        if not date[i].isnumeric():
-            return False
-
-    if date[2] == '.' and date[5] == '.' and date[10] == ' ' and date[13] == ':':
+    try:
+        datetime.strptime(date, "%d.%m.%Y %H:%M")
         return True
-
-    return False
+    except ValueError:
+        return False
 
 def is_right_homework_date_format(date: str) -> bool:
-    content = date.split(".")
-
-    if len(content) != 3:
+    try:
+        datetime.strptime(date, "%d.%m.%Y")
+        return True
+    except ValueError:
         return False
-
-    if len(content[0]) != 2 or len(content[1]) != 2:
-        return False
-
-    if len(content[2]) != 4:
-        return False
-
-    for part in content:
-        for char in part:
-            if not char.isnumeric():
-                return False
-
-    return True
 
 def set_remind_time(user_id, time: str | None):
     if not user_exists(user_id):
