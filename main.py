@@ -1,6 +1,4 @@
 from aiogram import Bot, Dispatcher
-from modules.db_api import *
-import modules.notifier as notifier
 import asyncio
 
 from modules.handlers import *

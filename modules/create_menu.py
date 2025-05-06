@@ -9,7 +9,9 @@ def create_main_menu(user_id):
         InlineKeyboardButton(text='Профиль',
                              callback_data='profile'),
         InlineKeyboardButton(text='Расписание',
-                             callback_data='schedule')
+                             callback_data='schedule'),
+        InlineKeyboardButton(text='Домашнее задание',
+                             callback_data='homework')
     )
     if is_elder(user_id) or is_admin(user_id):
         builder.add(
@@ -32,7 +34,7 @@ def create_schedule_menu(user_id):
 
     builder.add(
         InlineKeyboardButton(text='Просмотреть расписание',
-                             callback_data='view_schedule')
+                             callback_data='view_schedule'),
     )
 
     if has_elder_rights(user_id):
@@ -89,8 +91,6 @@ def create_homework_menu(user_id):
      builder = InlineKeyboardBuilder()
  
      builder.add(
-         InlineKeyboardButton(text='Добавить домашнее задание', callback_data='add_homework'),
-         InlineKeyboardButton(text='Удалить домашнее задание', callback_data='remove_homework'),
          InlineKeyboardButton(text='Просмотреть домашнее задание', callback_data='list_homework'),
      )
  

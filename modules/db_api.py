@@ -1,24 +1,9 @@
 from datetime import datetime
 
-import mysql.connector as mysql
-
-mysql_connection = {}
-
-with open('mysql_connection.txt') as f:
-    connection_info = f.read().strip()
-    splitted = connection_info.split(" || ")
-    mysql_connection["host"] = splitted[0]
-    mysql_connection["user"] = splitted[1]
-    mysql_connection["password"] = splitted[2]
-    mysql_connection["database"] = splitted[3]
+import sqlite3
 
 def create_connection():
-    return mysql.connect(
-        host=mysql_connection["host"],
-        user=mysql_connection["user"],
-        password=mysql_connection["password"],
-        database=mysql_connection["database"]
-    )
+    return sqlite3.connect("database.db")
 
 def init_database():
     with create_connection() as client:
@@ -36,7 +21,7 @@ def init_database():
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS homework(
-                id INT PRIMARY KEY AUTO_INCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 subject VARCHAR(50),
                 description VARCHAR(255),
                 expires VARCHAR(10)
@@ -45,7 +30,7 @@ def init_database():
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS homework_photos(
-                id INT PRIMARY KEY AUTO_INCREMENT,
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 homework_id INT,
                 image MEDIUMBLOB,
                 FOREIGN KEY(homework_id) REFERENCES homework(id)
@@ -65,7 +50,7 @@ def create_user(user_id, username, is_admin=False, is_elder=False, remind_time="
     with create_connection() as client:
         cursor = client.cursor()
 
-        cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id, ))
         existing_user = cursor.fetchone()
 
         if not existing_user:
@@ -77,7 +62,7 @@ def user_exists(user_id) -> bool:
     with create_connection() as client:
         cursor = client.cursor()
 
-        cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id, ))
         user = cursor.fetchone()
 
         return bool(user)
@@ -86,7 +71,7 @@ def username_exists(username) -> bool:
     with create_connection() as client:
         cursor = client.cursor()
 
-        cursor.execute("SELECT * FROM users WHERE username=%s", (username, ))
+        cursor.execute("SELECT * FROM users WHERE username=?", (username, ))
         user = cursor.fetchone()
 
         return bool(user)
@@ -95,7 +80,7 @@ def id_from_username(username):
     with create_connection() as client:
         cursor = client.cursor()
 
-        cursor.execute("SELECT user_id FROM users WHERE username=%s", (username, ))
+        cursor.execute("SELECT user_id FROM users WHERE username=?", (username, ))
         res = cursor.fetchone()
 
         return res[0]
@@ -106,7 +91,7 @@ def is_admin(user_id) -> bool:
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("SELECT is_admin FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute("SELECT is_admin FROM users WHERE user_id=?", (user_id, ))
         return bool(cursor.fetchone()[0])
 
 def is_elder(user_id) -> bool:
@@ -115,13 +100,13 @@ def is_elder(user_id) -> bool:
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("SELECT is_elder FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute("SELECT is_elder FROM users WHERE user_id=?", (user_id, ))
         return bool(cursor.fetchone()[0])
 
 def get_remind_time(user_id) -> str | None:
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute(f"SELECT remind_time FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute(f"SELECT remind_time FROM users WHERE user_id=?", (user_id, ))
         res = cursor.fetchone()
 
         if not bool(res) or res == "":
@@ -162,7 +147,7 @@ def set_remind_time(user_id, time: str | None):
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("UPDATE users SET remind_time=%s WHERE user_id=%s", (time, user_id))
+        cursor.execute("UPDATE users SET remind_time=? WHERE user_id=?", (time, user_id))
         client.commit()
 
 def set_username(user_id, username: str | None):
@@ -171,7 +156,7 @@ def set_username(user_id, username: str | None):
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("UPDATE users SET username=%s WHERE user_id=%s", (username, user_id))
+        cursor.execute("UPDATE users SET username=? WHERE user_id=?", (username, user_id))
         client.commit()
 
 def set_elder(username, elder: bool):
@@ -180,7 +165,7 @@ def set_elder(username, elder: bool):
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("UPDATE users SET is_elder=%s WHERE username=%s", (elder, username))
+        cursor.execute("UPDATE users SET is_elder=? WHERE username=?", (elder, username))
 
 def has_elder_rights(user_id) -> bool:
     if not user_exists(user_id):
@@ -188,7 +173,7 @@ def has_elder_rights(user_id) -> bool:
 
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("SELECT is_admin, is_elder FROM users WHERE user_id=%s", (user_id, ))
+        cursor.execute("SELECT is_admin, is_elder FROM users WHERE user_id=?", (user_id, ))
         res = cursor.fetchone()
         return bool(res[0]) or bool(res[1])
 
@@ -202,13 +187,13 @@ def add_homework(date, subject, description, photos):
     with create_connection() as client:
         cursor = client.cursor()
 
-        cursor.execute("INSERT INTO homework (subject, description, expires) VALUES (%s, %s, %s)", (subject, description, date))
+        cursor.execute("INSERT INTO homework (subject, description, expires) VALUES (?, ?, ?)", (subject, description, date))
 
         homework_id = cursor.lastrowid
 
         for photo in photos:
             print("Inserted an image into homework_photos")
-            cursor.execute("INSERT INTO homework_photos (homework_id, image) VALUES (%s, %s)", (homework_id, photo))
+            cursor.execute("INSERT INTO homework_photos (homework_id, image) VALUES (?, ?)", (homework_id, photo))
 
         client.commit()
 
