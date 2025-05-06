@@ -1,4 +1,4 @@
-from aiogram import Router, Dispatcher
+from aiogram import Router
 from aiogram.filters.state import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command

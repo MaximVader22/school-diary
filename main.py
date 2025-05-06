@@ -1,4 +1,4 @@
-from aiogram import Bot, Dispatcher, Router
+from aiogram import Bot, Dispatcher
 from modules.db_api import *
 import modules.notifier as notifier
 import asyncio
@@ -12,9 +12,6 @@ with open('http_api.txt') as f:
 
 # Инициализация бота и диспетчера
 bot = Bot(token=token)
-dp = Dispatcher()
-dp.include_router(router) 
-dp.include_router(router2)
 
 @router.message(F.text, StateFilter(Form.create_announcement))
 async def handle_create_announcement(message: Message, state: FSMContext):
@@ -47,7 +44,7 @@ async def handle_create_event(message: Message, state: FSMContext):
         await message.answer("Неправильный формат сообщения")
 
 # Обработка изображений для домашнего задания
-@router2.message(F.photo, StateFilter(Form.edit_homework_add))
+@router.message(F.photo, StateFilter(Form.edit_homework_add))
 async def handle_add_homework_image(message: Message, state: FSMContext):
     max_photos = 10 # Максимальное количество фото в одной домашке
  
@@ -83,4 +80,7 @@ async def main():
 
 
 if __name__ == '__main__':
+    dp = Dispatcher()
+    dp.include_router(router)
+    dp.include_router(router2)
     asyncio.run(main())

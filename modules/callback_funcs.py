@@ -1,7 +1,7 @@
 from aiogram import F
 from aiogram.types import CallbackQuery
 from aiogram.filters.state import StateFilter
-from aiogram import Router, Dispatcher
+from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.enums import ParseMode
 
