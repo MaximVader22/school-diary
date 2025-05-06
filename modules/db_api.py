@@ -200,8 +200,40 @@ def add_homework(date, subject, description, photos):
 def list_homework():
     with create_connection() as client:
         cursor = client.cursor()
-        cursor.execute("SELECT expires, subject, description FROM homework")
+        cursor.execute("SELECT * FROM homework")
         return cursor.fetchall()
+
+def get_homework_data(homework_id: int):
+    with create_connection() as client:
+        cursor = client.cursor()
+        cursor.execute("SELECT * FROM homework WHERE id=?", (homework_id, ))
+        homework = cursor.fetchone()
+
+        if not homework:
+            return None
+
+        cursor.execute("SELECT * FROM homework_photos WHERE homework_id=?", (homework_id, ))
+        photos = cursor.fetchall()
+        if not photos:
+            photos = []
+
+        return {
+            "id": homework[0],
+            "subject": homework[1],
+            "description": homework[2],
+            "expires": homework[3],
+            "photos": photos
+        }
+
+def remove_homework(homework_id: int):
+    with create_connection() as client:
+        cursor = client.cursor()
+        cursor.execute("DELETE FROM homework WHERE id=?", (homework_id, ))
+        cursor.execute("DELETE FROM homework_photos WHERE homework_id=?", (homework_id, ))
+        client.commit()
+
+def create_homework_cleaning_process():
+    pass
 
 if __name__ == '__main__':
     init_database()

@@ -1,6 +1,7 @@
 from aiogram import Bot, Dispatcher
 import asyncio
 
+from modules import scheduler_manager
 from modules.handlers import *
 from modules.callback_funcs import *
 
@@ -73,7 +74,7 @@ async def handle_add_homework_image(message: Message, state: FSMContext):
 async def main():
     await bot.delete_webhook()
     init_database()
-    notifier.initialise_all_notifiers()
+    scheduler_manager.initialise()
     await dp.start_polling(bot)
 
 

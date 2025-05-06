@@ -1,5 +1,7 @@
+from io import BytesIO
+
 from aiogram import F
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, BufferedInputFile, InputMediaPhoto
 from aiogram.filters.state import StateFilter
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
@@ -152,8 +154,32 @@ async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
     builder = InlineKeyboardBuilder()
 
     for work in collection:
-        builder.add(InlineKeyboardButton(text=f"{work[0]} - {work[1]}: {work[2]}", callback_data="asdasd"))
+        builder.add(InlineKeyboardButton(text=f"[{work[0]}] {work[1]} - {work[3]}", callback_data=f"homework_get_{work[0]}", ))
 
     builder.adjust(1)
+    builder.add(InlineKeyboardButton(text="Назад", callback_data="back_to_main"))
 
     await call.message.answer("Список домашнего задания:", reply_markup=builder.as_markup())
+
+@router.callback_query(F.data.startswith('homework_get_'))
+async def homework_get_prompt(call: CallbackQuery, state: FSMContext):
+    homework_id = int(call.data.replace("homework_get_", ""))
+    homework = get_homework_data(homework_id)
+
+    text = f"Домашнее задание по {homework["subject"]}:\n\nОписание: {homework["description"]}\n\nИстекает {homework["expires"]}"
+
+    photo_files = []
+    first_photo = True
+    for index, photo in enumerate(homework["photos"]):
+        file_buffer = BufferedInputFile(photo[2], filename=f"file_{index}.jpg")
+        if first_photo:
+            media_photo = InputMediaPhoto(media=file_buffer, caption=text)
+            first_photo = False
+        else:
+            media_photo = InputMediaPhoto(media=file_buffer)
+        photo_files.append(media_photo)
+
+    ##await call.message.answer(text, reply_markup=InlineKeyboardBuilder()
+    ##                        .add(InlineKeyboardButton(text="Назад", callback_data="list_homework"))
+    ##                        .as_markup())
+    await call.message.answer_media_group(photo_files)

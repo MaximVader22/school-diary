@@ -2,8 +2,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import modules.db_api as db_api
 import main
-
-scheduler = AsyncIOScheduler()
+from modules import scheduler_manager
 
 async def notify(user_id):
     print("Just notified " + str(user_id) + "!")
@@ -11,6 +10,8 @@ async def notify(user_id):
 
 def add_notifier(user_id, time):
     notify_id = "notify_" + str(user_id)
+    scheduler = scheduler_manager.scheduler
+
     if scheduler.get_job(job_id=notify_id):
         scheduler.remove_job(job_id=notify_id)
         print("Removed previous notifier for " + str(user_id))
@@ -25,10 +26,10 @@ def add_notifier(user_id, time):
 
 def remove_notifier(user_id):
     notify_id = "notify_" + str(user_id)
-    scheduler.remove_job(job_id=notify_id)
+    scheduler_manager.scheduler.remove_job(job_id=notify_id)
     print("Removed notifier for " + str(user_id))
 
-def initialise_all_notifiers():
+def initialise():
     with db_api.create_connection() as client:
         users = client.execute("SELECT user_id, remind_time FROM users").fetchall()
         for user in users:
@@ -37,4 +38,4 @@ def initialise_all_notifiers():
 
             if time != "":
                 add_notifier(user[0], user[1])
-    scheduler.start()
+    scheduler_manager.scheduler.start()
