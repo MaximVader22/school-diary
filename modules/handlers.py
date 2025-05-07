@@ -43,6 +43,13 @@ async def handle_add_subject(message: Message, state: FSMContext):
         await message.answer("У вас нет прав старосты.")
         return
     try:
+        if message.text == "Отмена":
+            await state.set_state(Form.idle)
+            await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+            return
+
+        await message.delete()
+
         day, subject, start_time, end_time = map(str.strip, message.text.split(',', 3))
         assert day in DAYS_OF_WEEK
 
@@ -52,7 +59,6 @@ async def handle_add_subject(message: Message, state: FSMContext):
 
         sch.add_schedule('schedule.json', day, subject, start_time, end_time)
         await message.answer(f"Предмет '{subject}' успешно добавлен на {day}.")
-        await state.set_state(Form.idle)
     except ValueError:
         await message.answer("Неверный формат ввода. Пожалуйста, используйте формат: день, предмет.")
     except AssertionError:

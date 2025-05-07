@@ -166,6 +166,7 @@ def set_elder(username, elder: bool):
     with create_connection() as client:
         cursor = client.cursor()
         cursor.execute("UPDATE users SET is_elder=? WHERE username=?", (elder, username))
+        client.commit()
 
 def has_elder_rights(user_id) -> bool:
     if not user_exists(user_id):
