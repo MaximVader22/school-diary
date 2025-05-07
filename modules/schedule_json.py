@@ -1,19 +1,20 @@
 import json
 import os
 
-# Функция для загрузки данных из JSON-файла
+
+# Загрузка данных из JSON-файла
 def load_schedule(file_name):
     if os.path.exists(file_name):
         with open(file_name, 'r', encoding='utf-8') as file:
             return json.load(file)
     return {}
 
-# Функция для сохранения данных в JSON-файл
+# Сохранение данных в JSON-файл
 def save_schedule(file_name, schedule):
     with open(file_name, 'w', encoding='utf-8') as file:
         json.dump(schedule, file, ensure_ascii=False, indent=4)
 
-# Функция для добавления расписания
+# Добавление расписания
 def add_schedule(file_name, day: str, subject: str, start_time: str, end_time: str):
     schedule = load_schedule(file_name)
 
@@ -29,7 +30,7 @@ def add_schedule(file_name, day: str, subject: str, start_time: str, end_time: s
 
     save_schedule(file_name, schedule)
 
-# Функция для удаления одного вхождения предмета
+# Удаление одного вхождения предмета
 def remove_one_subject(file_name, subject: str):
     schedule = load_schedule(file_name)
     removed = False  # Флаг для проверки, был ли удален предмет

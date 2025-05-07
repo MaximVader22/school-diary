@@ -1,13 +1,16 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import modules.db_api as db_api
+
 import main
 from modules import scheduler_manager
 
+
+# Активация напоминалки
 async def notify(user_id):
     print("Just notified " + str(user_id) + "!")
     await main.bot.send_message(chat_id=user_id, text="Домашку делай")
 
+# Доавбление напоминалки
 def add_notifier(user_id, time):
     notify_id = "notify_" + str(user_id)
     scheduler = scheduler_manager.scheduler
@@ -24,11 +27,13 @@ def add_notifier(user_id, time):
     )
     scheduler.add_job(notify, id = notify_id, trigger=trigger, args=[user_id])
 
+# Удаление напоминалки
 def remove_notifier(user_id):
     notify_id = "notify_" + str(user_id)
     scheduler_manager.scheduler.remove_job(job_id=notify_id)
     print("Removed notifier for " + str(user_id))
 
+# Инициализация напоминалки
 def initialise():
     with db_api.create_connection() as client:
         users = client.execute("SELECT user_id, remind_time FROM users").fetchall()

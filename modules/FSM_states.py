@@ -1,5 +1,7 @@
 from aiogram.filters.state import State, StatesGroup
 
+
+# Состояния пользователя (нужны для перехода по меню)
 class Form(StatesGroup):
     idle = State()
     edit_homework = State()

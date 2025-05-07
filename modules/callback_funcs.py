@@ -1,5 +1,3 @@
-from io import BytesIO
-
 from aiogram import F
 from aiogram.types import CallbackQuery, BufferedInputFile, InputMediaPhoto
 from aiogram.filters.state import StateFilter
@@ -11,20 +9,22 @@ from modules.FSM_states import *
 from modules.create_menu import *
 import modules.schedule_json as sch
 
-router = Router()
+
+router_callback = Router()
 
 DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
+
 # Профиль
-@router.callback_query(F.data == "profile")
+@router_callback.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
     await call.answer()
-    await call.message.answer("Это ваш профиль. Здесь пока ничего нет.",
-                              reply_markup=create_profile_menu(call.from_user.id))
+    await call.message.answer("Это ваш профиль",
+                              reply_markup=create_profile_menu())
 
 
 # Расписание
-@router.callback_query(F.data == "schedule", StateFilter(Form.idle))
+@router_callback.callback_query(F.data == "schedule", StateFilter(Form.idle))
 async def schedule(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule)
@@ -33,7 +33,7 @@ async def schedule(call: CallbackQuery, state: FSMContext):
 
 
 # Старосты
-@router.callback_query(F.data == "elders", StateFilter(Form.idle))
+@router_callback.callback_query(F.data == "elders", StateFilter(Form.idle))
 async def elders(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders)
@@ -42,14 +42,14 @@ async def elders(call: CallbackQuery, state: FSMContext):
 
 
 # Просмотр расписания
-@router.callback_query(F.data == "view_schedule")
+@router_callback.callback_query(F.data == "view_schedule")
 async def view_schedule(call: CallbackQuery):
     await call.answer()
 
     schedule_data = sch.load_schedule('schedule.json')
 
     if not schedule_data:
-        await call.message.answer("Расписание пустое.")
+        await call.message.answer("Расписание пустое")
         return
 
     response_parts = ['Ваше текущее расписание:\n ', '', '', '', '', '', '']
@@ -65,42 +65,44 @@ async def view_schedule(call: CallbackQuery):
 
 
 # Установка времени напоминания
-@router.callback_query(F.data == "edit_remind_time", StateFilter(Form.idle))
+@router_callback.callback_query(F.data == "edit_remind_time", StateFilter(Form.idle))
 async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_remind_time)
-    await call.message.answer("Введите время напоминания в формате HH:MM :")
+    await call.message.answer("Введите время напоминания в формате ЧЧ:ММ :")
 
-@router.callback_query(F.data == "add_subject")
+
+# Добавление предмета
+@router_callback.callback_query(F.data == "add_subject")
 async def add_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule_add)
     await call.message.answer(
-        "Введите день недели, предмет, время начала и время конца через запятую (например: `Monday, Math, 8:30, 9:10`):")
+        "Введите день недели, предмет, время начала и время конца через запятую (например: `Понедельник, Математика, 8:30, 9:10`):")
 
 # Удаление предмета
-@router.callback_query(F.data == "remove_subject")
+@router_callback.callback_query(F.data == "remove_subject")
 async def remove_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule_delete)
     await call.message.answer("Введите название предмета для удаления:")
 
 # Добавление старосты
-@router.callback_query(F.data == "add_elder")
+@router_callback.callback_query(F.data == "add_elder")
 async def add_elder_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders_add)
     await call.message.answer("Введите имя пользователя нового старосты:")
 
 # Удаление старосты
-@router.callback_query(F.data == "remove_elder")
+@router_callback.callback_query(F.data == "remove_elder")
 async def remove_elder_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders_delete)
     await call.message.answer("Введите имя пользователя старосты, которого надо удалить:")
 
 # Создание объявления
-@router.callback_query(F.data == "create_announcement")
+@router_callback.callback_query(F.data == "create_announcement")
 async def create_announcement(call: CallbackQuery, state: FSMContext):
     if not has_elder_rights(call.from_user.id):
         await call.answer("У вас нет прав для этого.")
@@ -110,24 +112,24 @@ async def create_announcement(call: CallbackQuery, state: FSMContext):
                               parse_mode=ParseMode.MARKDOWN_V2)
 
 # Создание объявления о мероприятии
-@router.callback_query(F.data == "create_event")
+@router_callback.callback_query(F.data == "create_event")
 async def create_event(call: CallbackQuery, state: FSMContext):
     if not has_elder_rights(call.from_user.id):
-        await call.answer("У вас нет прав для этого.")
+        await call.answer("У вас нет прав для этого")
         return
     await state.set_state(Form.create_event)
-    await call.message.answer("Введите ваше объявление в формате _Название, Время \(DD\.MM\.YYYY HH:MM\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
+    await call.message.answer("Введите ваше объявление в формате _Название, Время \(ДД\.ММ\.ГГГГ ЧЧ:ММ\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
 
 # В главное меню
-@router.callback_query(F.data == "back_to_main")
+@router_callback.callback_query(F.data == "back_to_main")
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
-    await call.message.answer("Вы вернулись в главное меню.",
+    await call.message.answer("Вы вернулись в главное меню",
                               reply_markup=create_main_menu(call.from_user.id))
 
 # Домашнее задание
-@router.callback_query(F.data == "homework", StateFilter(Form.idle))
+@router_callback.callback_query(F.data == "homework", StateFilter(Form.idle))
 async def homework(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_homework)
@@ -135,14 +137,14 @@ async def homework(call: CallbackQuery, state: FSMContext):
                                 reply_markup=create_homework_menu(call.from_user.id))
 
 # Добавление домашнего задания
-@router.callback_query(F.data == "add_homework")
+@router_callback.callback_query(F.data == "add_homework")
 async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_homework_add)
-    await call.message.answer("Введите дату истечения домашнего задания, название предмета и описание, разделяя их знаком ';'\nЧтобы добавить изображение, отправьте его отдельно.\nВы можете добавить до 10 изображений.")
+    await call.message.answer("Введите дату истечения домашнего задания, название предмета и описание, разделяя их знаком ';'\nЧтобы добавить изображение, отправьте его отдельно.\nВы можете добавить до 10 изображений")
 
 # Просмотр домашнего задания
-@router.callback_query(F.data == "list_homework")
+@router_callback.callback_query(F.data == "list_homework")
 async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     collection = list_homework()
@@ -161,12 +163,14 @@ async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
 
     await call.message.answer("Список домашнего задания:", reply_markup=builder.as_markup())
 
-@router.callback_query(F.data.startswith('homework_get_'))
+
+# Просмотр описания домашнего задания
+@router_callback.callback_query(F.data.startswith('homework_get_'))
 async def homework_get_prompt(call: CallbackQuery, state: FSMContext):
     homework_id = int(call.data.replace("homework_get_", ""))
     homework = get_homework_data(homework_id)
 
-    text = f"Домашнее задание по {homework["subject"]}:\n\nОписание: {homework["description"]}\n\nИстекает {homework["expires"]}"
+    text = f"Домашнее задание по {homework['subject']}:\n\nОписание: {homework['description']}\n\nИстекает {homework['expires']}"
 
     photo_files = []
     first_photo = True

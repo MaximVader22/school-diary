@@ -2,6 +2,8 @@ from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from modules.db_api import *
 
+
+# Главное меню
 def create_main_menu(user_id):
     builder = InlineKeyboardBuilder()
 
@@ -28,7 +30,7 @@ def create_main_menu(user_id):
     builder.adjust(1)
     return builder.as_markup()
 
-
+# Меню расписания
 def create_schedule_menu(user_id):
     builder = InlineKeyboardBuilder()
 
@@ -53,8 +55,8 @@ def create_schedule_menu(user_id):
     builder.adjust(1)
     return builder.as_markup()
 
-
-def create_profile_menu(user_id):
+# Меню профиля
+def create_profile_menu():
     builder = InlineKeyboardBuilder()
 
     builder.add(
@@ -67,7 +69,7 @@ def create_profile_menu(user_id):
     builder.adjust(1)
     return builder.as_markup()
 
-
+# Меню старост
 def create_elders_menu(user_id):
     builder = InlineKeyboardBuilder()
 
@@ -87,6 +89,7 @@ def create_elders_menu(user_id):
     builder.adjust(1)
     return builder.as_markup()
 
+# Меню домашней работы
 def create_homework_menu(user_id):
      builder = InlineKeyboardBuilder()
  

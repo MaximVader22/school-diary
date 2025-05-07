@@ -4,7 +4,9 @@ from modules import notifier
 from modules import db_api
 from datetime import datetime
 
+
 scheduler = AsyncIOScheduler()
+
 
 def initialise():
     notifier.initialise()
