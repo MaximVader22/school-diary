@@ -90,7 +90,7 @@ async def handle_add_elder(message: Message, state: FSMContext):
         await message.answer("Не найден пользователь с таким именем.")
         return
 
-    set_elder(id_from_username(username), True)
+    set_elder(username, True)
     await message.answer(f"{username} назначен старостой.")
 
 
