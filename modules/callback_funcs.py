@@ -129,7 +129,7 @@ async def back_to_main(call: CallbackQuery, state: FSMContext):
                               reply_markup=create_main_menu(call.from_user.id))
 
 # Домашнее задание
-@router_callback.callback_query(F.data == "homework", StateFilter(Form.idle))
+@router_callback.callback_query(F.data == "homework")
 async def homework(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_homework)
