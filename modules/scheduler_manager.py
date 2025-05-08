@@ -5,14 +5,16 @@ from modules import db_api
 from datetime import datetime
 
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler() # Общий экземпляр AsyncIOScheduler для всех модулей
 
 
+# Инициализация всех модулей и задач, связанных с apscheduler
 def initialise():
     notifier.initialise()
     scheduler.add_job(clean_homework, 'interval', id="clean_homework", hours=1)
 
 
+# Очитска просроченных домашних заданий
 def clean_homework():
     print("Cleaning homework")
     homework_list = db_api.list_homework()
