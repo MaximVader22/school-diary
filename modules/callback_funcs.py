@@ -31,7 +31,7 @@ async def profile(call: CallbackQuery):
 
     await call.message.answer(f"🏠 Это ваш профиль\n⏱️ Время напоминания: {remind_time}\n⚙️ Админ: {admin}\n📖 Староста: {elder}",
                               reply_markup=create_profile_menu())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, call.message.message_id)
 
 
 # Расписание
@@ -81,7 +81,7 @@ async def view_schedule(call: CallbackQuery):
     )
 
     await call.message.answer(' '.join(response_parts), reply_markup=builder.as_markup())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, call.message.message_id)
 
 
 # Установка времени напоминания
@@ -200,7 +200,7 @@ async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
     builder.adjust(1)
 
     await call.message.answer("📃 Список домашнего задания:", reply_markup=builder.as_markup())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, call.message.message_id)
 
 
 # Просмотр описания домашнего задания
@@ -223,4 +223,4 @@ async def homework_get_prompt(call: CallbackQuery, state: FSMContext):
         photo_files.append(media_photo)
 
     await call.message.answer_media_group(photo_files)
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, call.message.message_id)
