@@ -16,6 +16,15 @@ bot = Bot(token=token)
 # Последнее сообщение, отправленное пользователю
 last_messages = {}
 
+# Удаление послднего сообщения
+async def delete_prev_message(user_id, message_id, delete_this=True):
+    if last_messages.get(user_id):
+        await bot.delete_message(chat_id=user_id, message_id=last_messages[user_id])
+    if delete_this:
+        last_messages[user_id] = message_id + 1
+    else:
+        last_messages[user_id] = None
+
 # Активация базы данных и бота
 async def main():
     await bot.delete_webhook()
