@@ -13,6 +13,9 @@ with open('http_api.txt') as f:
 # Инициализация бота
 bot = Bot(token=token)
 
+# Последнее сообщение, отправленное пользователю
+last_messages = {}
+
 # Активация базы данных и бота
 async def main():
     await bot.delete_webhook()

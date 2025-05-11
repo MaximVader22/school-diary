@@ -17,6 +17,12 @@ router_handler = Router()
 DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье')
 
 
+async def delete_prev_message(user_id, message_id):
+    print(main.last_messages)
+    if main.last_messages.get(user_id):
+        await main.bot.delete_message(chat_id=user_id, message_id=main.last_messages[user_id])
+    main.last_messages[user_id] = message_id + 1
+
 # Обработчик команды /start
 @router_handler.message(Command("start"))
 async def send_welcome(message: Message, state: FSMContext):
@@ -25,6 +31,7 @@ async def send_welcome(message: Message, state: FSMContext):
     await state.set_state(Form.idle)
     await message.answer("Приветствую! Используйте кнопки для навигации:",
                          reply_markup=create_main_menu(message.from_user.id))
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик изменения напоминалки
 @router_handler.message(F.text, StateFilter(Form.edit_remind_time))
@@ -46,6 +53,7 @@ async def handle_edit_remind_time(message: Message, state: FSMContext):
     notifier.add_notifier(message.from_user.id, text)
     await state.set_state(Form.idle)
     await message.answer(f"✅ Время напоминания установлено. Вы возвращены в профиль", reply_markup=create_profile_menu())
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик добавления предмета
 @router_handler.message(F.text, StateFilter(Form.edit_schedule_add))
@@ -74,6 +82,7 @@ async def handle_add_subject(message: Message, state: FSMContext):
         await message.answer("❌ Неверный формат ввода. Пожалуйста, используйте формат: день недели, предмет, время начала урока, время конца урока (время в формате ЧЧ:ММ)")
     except AssertionError:
         await message.answer("❌ Неверный формат ввода дня недели")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик удаления предмета
 @router_handler.message(F.text, StateFilter(Form.edit_schedule_delete))
@@ -85,6 +94,7 @@ async def handle_remove_subject(message: Message, state: FSMContext):
     subject = message.text.strip()
     sch.remove_one_subject('schedule.json', subject)
     await message.answer(f"✅ Попытка удалить предмет '{subject}' завершена")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик добавления старосты
 @router_handler.message(F.text, StateFilter(Form.edit_elders_add))
@@ -104,6 +114,7 @@ async def handle_add_elder(message: Message, state: FSMContext):
     set_elder(username, True)
     print(f"Added elder {username}")
     await message.answer(f"✅ {username} назначен старостой")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик удаления старосты
 @router_handler.message(F.text, StateFilter(Form.edit_elders_delete))
@@ -123,6 +134,7 @@ async def handle_remove_elder(message: Message, state: FSMContext):
     set_elder(id_from_username(username), False)
     print(f"Removed elder {username}")
     await message.answer(f"✅ {username} больше не староста")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик создания объявления
 @router_handler.message(F.text, StateFilter(Form.create_announcement))
@@ -138,6 +150,7 @@ async def handle_create_announcement(message: Message, state: FSMContext):
             await main.bot.send_message(user_id[0], announcement)
         await message.answer("✅ Объявление создано. Вы возвращены в главное меню",
                              reply_markup=create_main_menu(message.from_user.id))
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик создания объявления о мероприятии
 @router_handler.message(F.text, StateFilter(Form.create_event))
@@ -157,6 +170,7 @@ async def handle_create_event(message: Message, state: FSMContext):
                              reply_markup=create_main_menu(message.from_user.id))
     else:
         await message.answer("❌ Неправильный формат сообщения")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик добавления домашней работы
 @router_handler.message(F.text, StateFilter(Form.edit_homework_add))
@@ -186,6 +200,7 @@ async def handle_add_homework(message: Message, state: FSMContext):
  
     await message.answer(f"✅ Домашнее задание было добавлено")
     await state.clear()
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик изображений для домашнего задания
 @router_handler.message(F.photo, StateFilter(Form.edit_homework_add))
@@ -215,6 +230,7 @@ async def handle_add_homework_image(message: Message, state: FSMContext):
  
     await state.update_data({"photos": updated_photos})
     await message.answer("✅ Фотография была добавлена")
+    await delete_prev_message(message.from_user.id, message.message_id)
 
 # Обработчик нераспознанного запроса:
 @router_handler.message()
@@ -222,3 +238,4 @@ async def idle(message: types.Message, state: FSMContext):
     await state.set_state(Form.idle)
     await message.answer("Команда не понята. Используйте кнопки для навигации:",
                          reply_markup=create_main_menu(message.from_user.id))
+    await delete_prev_message(message.from_user.id, message.message_id)
