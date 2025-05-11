@@ -103,15 +103,21 @@ def is_elder(user_id) -> bool:
         cursor.execute("SELECT is_elder FROM users WHERE user_id=?", (user_id, ))
         return bool(cursor.fetchone()[0])
 
-def get_remind_time(user_id) -> str | None:
+def get_remind_time(user_id: int) -> str | None:
+    if not user_exists(user_id):
+        return None
+
     with create_connection() as client:
         cursor = client.cursor()
         cursor.execute(f"SELECT remind_time FROM users WHERE user_id=?", (user_id, ))
         res = cursor.fetchone()
 
-        if not bool(res) or res == "":
+        print(bool(res))
+
+        if not bool(res) or res[0] == "":
             return None
 
+        print(res[0])
         return res[0]
 
 def is_right_time_format(time: str) -> bool:

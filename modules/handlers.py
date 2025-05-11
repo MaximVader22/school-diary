@@ -29,14 +29,21 @@ async def send_welcome(message: Message, state: FSMContext):
 # Обработчик изменения напоминалки
 @router_handler.message(F.text, StateFilter(Form.edit_remind_time))
 async def handle_edit_remind_time(message: Message, state: FSMContext):
-    time = message.text
+    text = message.text
 
-    if not is_right_time_format(time):
+    if text == "Удалить":
+        await message.answer(f"✅ Время напоминания удалено. Вы возвращены в профиль", reply_markup=create_profile_menu())
+        set_remind_time(message.from_user.id, None)
+        notifier.remove_notifier(message.from_user.id)
+        await state.set_state(Form.idle)
+        return
+
+    if not is_right_time_format(text):
         await message.answer(f"❌ Укажите время в формате HH:MM")
         return
 
-    set_remind_time(message.from_user.id, time)
-    notifier.add_notifier(message.from_user.id, time)
+    set_remind_time(message.from_user.id, text)
+    notifier.add_notifier(message.from_user.id, text)
     await state.set_state(Form.idle)
     await message.answer(f"✅ Время напоминания установлено. Вы возвращены в профиль", reply_markup=create_profile_menu())
 

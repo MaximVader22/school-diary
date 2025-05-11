@@ -19,7 +19,16 @@ DAYS_OF_WEEK = ('Понедельник', 'Вторник', 'Среда', 'Че�
 @router_callback.callback_query(F.data == "profile")
 async def profile(call: CallbackQuery):
     await call.answer()
-    await call.message.answer("Это ваш профиль",
+    user_id = call.from_user.id
+    remind_time = get_remind_time(user_id)
+    admin = is_admin(user_id)
+    elder = is_elder(user_id)
+
+    remind_time = "Нет" if remind_time is None else remind_time
+    admin = "✅" if admin else "❌"
+    elder = "✅" if elder else "❌"
+
+    await call.message.answer(f"🏠 Это ваш профиль\n⏱️ Время напоминания: {remind_time}\n⚙️ Админ: {admin}\n📖 Староста: {elder}",
                               reply_markup=create_profile_menu())
 
 
@@ -69,7 +78,7 @@ async def view_schedule(call: CallbackQuery):
 async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_remind_time)
-    await call.message.answer("✏️ Введите время напоминания в формате ЧЧ:ММ :")
+    await call.message.answer("✏️ Введите время напоминания в формате ЧЧ:ММ или 'Удалить', чтобы удалить напоминание:")
 
 
 # Добавление предмета
