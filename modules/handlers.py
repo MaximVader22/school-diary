@@ -74,6 +74,7 @@ async def handle_add_subject(message: Message, state: FSMContext):
 
         sch.add_schedule('schedule.json', day, subject, start_time, end_time)
         await message.answer(f"✅ Предмет '{subject}' успешно добавлен на {day}")
+        return
     except ValueError:
         await message.answer("❌ Неверный формат ввода. Пожалуйста, используйте формат: день недели, предмет, время начала урока, время конца урока (время в формате ЧЧ:ММ)")
     except AssertionError:
