@@ -145,11 +145,10 @@ def set_remind_time(user_id, time: str | None):
     if not user_exists(user_id):
         return
 
-    if not is_right_time_format(time):
-        return
-
     if time is None:
         time = ""
+    elif not is_right_time_format(time):
+        return
 
     with create_connection() as client:
         cursor = client.cursor()

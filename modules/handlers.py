@@ -8,6 +8,7 @@ from aiogram import F, types
 import main
 from modules.FSM_states import *
 from modules.create_menu import *
+import modules.scheduler_manager as sm
 import modules.schedule_json as sch
 import modules.notifier as notifier
 
@@ -157,10 +158,21 @@ async def handle_create_event(message: Message, state: FSMContext):
         await state.set_state(Form.idle)
         await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
     elif len(message.text) > 20 and is_right_date_format(message.text[-16:]):
+        text = message.text[:-18]
+        time = datetime.strptime(message.text[-16:], "%d.%m.%Y %H:%M")
+        username = message.from_user.username
+
         await state.set_state(Form.idle)
-        announcement = f'Объявление о мероприятии от пользователя @{message.from_user.username}:\n\n{message.text[:-18]}\n\nВремя события: {message.text[-16:]}'
+        announcement = f'Объявление о мероприятии от пользователя @{username}:\n\n{text}\n\nВремя события: {time}'
+
+        sm.add_event_notifications(
+            text = f'📖 Напоминание о запланированном мероприятии от @{username} на {time}:\n\n📝 Описание: {text}',
+            time = time
+        )
+
         for user_id in get_all_user_ids():
             await main.bot.send_message(user_id[0], announcement)
+
         await message.answer("✅ Объявление создано. Вы возвращены в главное меню",
                              reply_markup=create_main_menu(message.from_user.id))
     else:

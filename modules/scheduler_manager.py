@@ -26,3 +26,7 @@ def clean_homework():
         if today > expires:
             print(f"Homework {work[0]} was deleted while cleaning.")
             db_api.remove_homework(work[0])
+
+
+def add_event_notifications(text: str, time: datetime):
+    pass
