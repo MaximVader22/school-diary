@@ -174,7 +174,7 @@ async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
 ✏️ Введите домашнее задание в формате:
 {Дата истечения};{Название предмета};{Описание}
 
-🖼️ Если вы хотите добавить изображения, отправьте их отдельными сообщениями перед основным.
+🖼️ Вы можете добавить до 10 изображений, отправив их отдельными сообщениями.
 
 ❌ Чтобы отменить добавление домашнего задания, напишите Отмена
     """)
@@ -222,9 +222,5 @@ async def homework_get_prompt(call: CallbackQuery, state: FSMContext):
             media_photo = InputMediaPhoto(media=file_buffer)
         photo_files.append(media_photo)
 
+    await call.message.answer_media_group(photo_files)
     await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
-
-    if len(photo_files) > 0:
-        await call.message.answer_media_group(photo_files)
-    else:
-        await call.message.answer(text)
