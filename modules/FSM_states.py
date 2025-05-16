@@ -6,6 +6,7 @@ class Form(StatesGroup):
     idle = State()
     edit_homework = State()
     edit_homework_add = State()
+    edit_homework_delete = State()
     edit_schedule = State()
     edit_schedule_delete = State()
     edit_schedule_add = State()

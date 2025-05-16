@@ -180,6 +180,29 @@ async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
     """)
     await main.delete_prev_message(call.from_user.id, call.message.message_id)
 
+# Удаление домашнего задания
+@router_callback.callback_query(F.data == "remove_homework")
+async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
+    await call.answer()
+    await state.set_state(Form.edit_homework_delete)
+
+    text = """
+✏️ Введите цифру, связанную с домашним заданием
+
+❌ Чтобы отменить удаление домашнего задания, напишите Отмена
+
+📃 Список домашнего задания:"""
+
+    homework_list = list_homework()
+    if len(homework_list) > 0:
+        for index, work in enumerate(list_homework()):
+            text += f"\n[{index}] {work[3]} - {work[1]}"
+    else:
+        text += "\n[Пусто]"
+
+    await call.message.answer(text)
+    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+
 # Просмотр домашнего задания
 @router_callback.callback_query(F.data == "list_homework")
 async def list_homework_prompt(call: CallbackQuery, state: FSMContext):

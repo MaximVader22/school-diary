@@ -15,6 +15,7 @@ def create_main_menu(user_id):
         InlineKeyboardButton(text='Домашнее задание',
                              callback_data='homework')
     )
+
     if is_elder(user_id) or is_admin(user_id):
         builder.add(
             InlineKeyboardButton(text='Сделать объявление', callback_data='create_announcement'),

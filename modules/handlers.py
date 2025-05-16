@@ -209,6 +209,31 @@ async def handle_add_homework(message: Message, state: FSMContext):
     await state.clear()
     await main.delete_prev_message(message.from_user.id, message.message_id)
 
+# Обработчик удаление домашней работы
+@router_handler.message(F.text, StateFilter(Form.edit_homework_delete))
+async def handle_delete_homework(message: Message, state: FSMContext):
+    if message.text == "Отмена":
+        await message.answer("Вы возвращены в главное меню", reply_markup=create_main_menu(message.from_user.id))
+        await main.delete_prev_message(message.from_user.id, message.message_id)
+        return
+
+    data = await state.get_data()
+
+    if message.text == "Подтвердить":
+        homework_id = data.get("homework_id", None)
+
+        if homework_id is not None:
+            await message.answer(f"✅ Домашнее задание под номером {homework_id} было успешно удалено")
+            await state.update_data({"homework_id": None})
+            return
+
+    if not message.text.isnumeric():
+        await message.answer("❌ Введите действительное число")
+        return
+
+    await state.update_data({"homework_id": int(message.text)})
+    await message.answer(f"✅ Если вы уверены, что хотите удалить домашнее задание под номером {message.text}, напишите Подтвердить")
+
 # Обработчик изображений для домашнего задания
 @router_handler.message(F.photo, StateFilter(Form.edit_homework_add))
 async def handle_add_homework_image(message: Message, state: FSMContext):
