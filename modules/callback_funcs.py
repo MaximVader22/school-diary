@@ -29,9 +29,9 @@ async def profile(call: CallbackQuery):
     admin = "✅" if admin else "❌"
     elder = "✅" if elder else "❌"
 
-    await call.message.answer(f"🏠 Это ваш профиль\n⏱️ Время напоминания: {remind_time}\n⚙️ Админ: {admin}\n📖 Староста: {elder}",
+    msg = await call.message.answer(f"🏠 Это ваш профиль\n⏱️ Время напоминания: {remind_time}\n⚙️ Админ: {admin}\n📖 Староста: {elder}",
                               reply_markup=create_profile_menu())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, msg.message_id, False)
 
 
 # Расписание
@@ -39,9 +39,9 @@ async def profile(call: CallbackQuery):
 async def schedule(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule)
-    await call.message.answer("🔎 Выберите действие:",
+    msg = await call.message.answer("🔎 Выберите действие:",
                               reply_markup=create_schedule_menu(call.from_user.id))
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 
 # Старосты
@@ -49,9 +49,9 @@ async def schedule(call: CallbackQuery, state: FSMContext):
 async def elders(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders)
-    await call.message.answer("🔎 Выберите действие:",
+    msg = await call.message.answer("🔎 Выберите действие:",
                               reply_markup=create_elders_menu(call.from_user.id))
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 
 # Просмотр расписания
@@ -62,7 +62,7 @@ async def view_schedule(call: CallbackQuery):
     schedule_data = sch.load_schedule('schedule.json')
 
     if not schedule_data:
-        await call.message.answer("❌ Расписание пустое")
+        msg = await call.message.answer("❌ Расписание пустое")
         return
 
     response_parts = ['Ваше текущее расписание:\n ', '', '', '', '', '', '']
@@ -80,8 +80,8 @@ async def view_schedule(call: CallbackQuery):
                              callback_data='back_to_main')
     )
 
-    await call.message.answer(' '.join(response_parts), reply_markup=builder.as_markup())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    msg = await call.message.answer(' '.join(response_parts), reply_markup=builder.as_markup())
+    await main.delete_prev_message(call.from_user.id, msg.message_id, False)
 
 
 # Установка времени напоминания
@@ -89,8 +89,8 @@ async def view_schedule(call: CallbackQuery):
 async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_remind_time)
-    await call.message.answer("✏️ Введите время напоминания в формате ЧЧ:ММ или 'Удалить', чтобы удалить напоминание:")
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer("✏️ Введите время напоминания в формате ЧЧ:ММ или 'Удалить', чтобы удалить напоминание:")
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 
 # Добавление предмета
@@ -98,33 +98,33 @@ async def edit_remind_time_prompt(call: CallbackQuery, state: FSMContext):
 async def add_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule_add)
-    await call.message.answer(
+    msg = await call.message.answer(
         "✏️ Введите день недели, предмет, время начала и время конца через запятую (например: `Понедельник, Математика, 8:30, 9:10`):")
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Удаление предмета
 @router_callback.callback_query(F.data == "remove_subject")
 async def remove_subject_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_schedule_delete)
-    await call.message.answer("✏️ Введите название предмета для удаления:")
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer("✏️ Введите название предмета для удаления:")
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Добавление старосты
 @router_callback.callback_query(F.data == "add_elder")
 async def add_elder_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders_add)
-    await call.message.answer("✏️ Введите имя пользователя нового старосты:")
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer("✏️ Введите имя пользователя нового старосты:")
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Удаление старосты
 @router_callback.callback_query(F.data == "remove_elder")
 async def remove_elder_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_elders_delete)
-    await call.message.answer("✏️ Введите имя пользователя старосты, которого надо удалить:")
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer("✏️ Введите имя пользователя старосты, которого надо удалить:")
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Создание объявления
 @router_callback.callback_query(F.data == "create_announcement")
@@ -133,9 +133,9 @@ async def create_announcement(call: CallbackQuery, state: FSMContext):
         await call.answer("❌ У вас нет прав для этого.")
         return
     await state.set_state(Form.create_announcement)
-    await call.message.answer("✏️ Введите ваше объявление или напишите *Отмена*, если вы не хотите создавать объявление",
+    msg = await call.message.answer("✏️ Введите ваше объявление или напишите *Отмена*, если вы не хотите создавать объявление",
                               parse_mode=ParseMode.MARKDOWN_V2)
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Создание объявления о мероприятии
 @router_callback.callback_query(F.data == "create_event")
@@ -144,33 +144,33 @@ async def create_event(call: CallbackQuery, state: FSMContext):
         await call.answer("❌ У вас нет прав для этого")
         return
     await state.set_state(Form.create_event)
-    await call.message.answer("✏️ Введите ваше объявление в формате _Название, Время \(ДД\.ММ\.ГГГГ ЧЧ:ММ\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer("✏️ Введите ваше объявление в формате _Название, Время \(ДД\.ММ\.ГГГГ ЧЧ:ММ\)_ или напишите *Отмена*, если вы не хотите создавать объявление", parse_mode=ParseMode.MARKDOWN_V2)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # В главное меню
 @router_callback.callback_query(F.data == "back_to_main")
 async def back_to_main(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.idle)
-    await call.message.answer("Вы вернулись в главное меню",
+    msg = await call.message.answer("Вы вернулись в главное меню",
                               reply_markup=create_main_menu(call.from_user.id))
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Домашнее задание
 @router_callback.callback_query(F.data == "homework")
 async def homework(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_homework)
-    await call.message.answer("🔎 Выберите действие:",
+    msg = await call.message.answer("🔎 Выберите действие:",
                                 reply_markup=create_homework_menu(call.from_user.id))
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Добавление домашнего задания
 @router_callback.callback_query(F.data == "add_homework")
 async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
     await call.answer()
     await state.set_state(Form.edit_homework_add)
-    await call.message.answer("""
+    msg = await call.message.answer("""
 ✏️ Введите домашнее задание в формате:
 {Дата истечения};{Название предмета};{Описание}
 
@@ -178,7 +178,7 @@ async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
 
 ❌ Чтобы отменить добавление домашнего задания, напишите Отмена
     """)
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Удаление домашнего задания
 @router_callback.callback_query(F.data == "remove_homework")
@@ -200,8 +200,8 @@ async def add_homework_prompt(call: CallbackQuery, state: FSMContext):
     else:
         text += "\n[Пусто]"
 
-    await call.message.answer(text)
-    await main.delete_prev_message(call.from_user.id, call.message.message_id)
+    msg = await call.message.answer(text)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 # Просмотр домашнего задания
 @router_callback.callback_query(F.data == "list_homework")
@@ -210,7 +210,7 @@ async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
     collection = list_homework()
 
     if len(collection) == 0:
-        await call.message.answer("❌ Нет домашнего задания")
+        msg = await call.message.answer("❌ Нет домашнего задания")
         return
 
     builder = InlineKeyboardBuilder()
@@ -222,8 +222,8 @@ async def list_homework_prompt(call: CallbackQuery, state: FSMContext):
 
     builder.adjust(1)
 
-    await call.message.answer("📃 Список домашнего задания:", reply_markup=builder.as_markup())
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    msg = await call.message.answer("📃 Список домашнего задания:", reply_markup=builder.as_markup())
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 
 # Просмотр описания домашнего задания
@@ -246,8 +246,8 @@ async def homework_get_prompt(call: CallbackQuery, state: FSMContext):
         photo_files.append(media_photo)
 
     if len(photo_files) > 0:
-        await call.message.answer_media_group(photo_files)
+        msg = await call.message.answer_media_group(photo_files)
     else:
-        await call.message.answer(text)
+        msg = await call.message.answer(text)
 
-    await main.delete_prev_message(call.from_user.id, call.message.message_id, False)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
