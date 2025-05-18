@@ -31,7 +31,7 @@ async def profile(call: CallbackQuery):
 
     msg = await call.message.answer(f"🏠 Это ваш профиль\n⏱️ Время напоминания: {remind_time}\n⚙️ Админ: {admin}\n📖 Староста: {elder}",
                               reply_markup=create_profile_menu())
-    await main.delete_prev_message(call.from_user.id, msg.message_id, False)
+    await main.delete_prev_message(call.from_user.id, msg.message_id)
 
 
 # Расписание
