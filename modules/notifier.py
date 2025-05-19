@@ -8,7 +8,9 @@ from modules import scheduler_manager
 # Активация напоминалки
 async def notify(user_id):
     print("Just notified " + str(user_id) + "!")
-    await main.bot.send_message(chat_id=user_id, text="Домашку делай")
+    await main.bot.send_message(chat_id=user_id, text="""
+⏱️ Напоминаем вам о выполнении вашего домашнего задания
+    """)
 
 # Доавбление напоминалки
 def add_notifier(user_id, time):
