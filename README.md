@@ -13,7 +13,9 @@ $ pip install -r requirements.txt
 ```
 
 ### 3) Укажите свой API token в Telegram
+```shell
 echo "<Ваш API token>" >> http_api.txt
+```
 
 ### 4) Запуск
 ```shell
