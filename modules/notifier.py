@@ -1,3 +1,5 @@
+from aiogram.types import InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 from apscheduler.triggers.cron import CronTrigger
 import modules.db_api as db_api
 
@@ -8,9 +10,12 @@ from modules import scheduler_manager
 # Активация напоминалки
 async def notify(user_id):
     print("Just notified " + str(user_id) + "!")
+    builder = InlineKeyboardBuilder()
+    builder.add(InlineKeyboardButton(text="Просмотреть домашнее задание", callback_data="list_homework"))
+
     await main.bot.send_message(chat_id=user_id, text="""
 ⏱️ Напоминаем вам о выполнении вашего домашнего задания
-    """)
+    """, reply_markup=builder.as_markup())
 
 # Доавбление напоминалки
 def add_notifier(user_id, time):
