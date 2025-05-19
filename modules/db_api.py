@@ -45,7 +45,7 @@ def are_users_empty():
         cursor.execute("SELECT * FROM users")
         return not bool(cursor.fetchone())
 
-def create_user(user_id, username, is_admin=False, is_elder=False, remind_time=""):
+def create_user(user_id, username, is_admin=False, is_elder=True, remind_time=""):
     print(f"Trying to create user {user_id}...")
     with create_connection() as client:
         cursor = client.cursor()
